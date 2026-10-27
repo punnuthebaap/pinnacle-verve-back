@@ -33,6 +33,9 @@ type Config struct {
 	// Storefront cache revalidation after admin catalogue changes (decision D36).
 	StorefrontRevalidateURL string
 	RevalidateSecret        string
+
+	// Uploaded media (local disk until hosting is chosen, decision D35).
+	MediaDir string
 }
 
 func (c Config) IsProduction() bool { return c.Env == "production" }
@@ -55,6 +58,7 @@ func Load() (Config, error) {
 		SweepInterval:            time.Minute,
 		StorefrontRevalidateURL:  get("STOREFRONT_REVALIDATE_URL", "http://localhost:3000/internal/revalidate"),
 		RevalidateSecret:         get("REVALIDATE_SECRET", "dev-revalidate-secret"),
+		MediaDir:                 get("MEDIA_DIR", ".local/media"),
 	}
 	if c.IsProduction() {
 		if c.PaymentProvider == "mock" {

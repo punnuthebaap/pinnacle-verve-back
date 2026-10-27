@@ -21,6 +21,7 @@ import (
 	"github.com/pinnacleverve/api/internal/admin"
 	"github.com/pinnacleverve/api/internal/catalog"
 	"github.com/pinnacleverve/api/internal/platform/database"
+	"github.com/pinnacleverve/api/internal/storage"
 	"github.com/pinnacleverve/api/internal/store"
 )
 
@@ -47,10 +48,11 @@ type Service struct {
 	q     *store.Queries
 	audit *admin.Service
 	rv    Revalidator
+	store storage.Store
 }
 
-func NewService(pool *pgxpool.Pool, q *store.Queries, audit *admin.Service, rv Revalidator) *Service {
-	return &Service{pool: pool, q: q, audit: audit, rv: rv}
+func NewService(pool *pgxpool.Pool, q *store.Queries, audit *admin.Service, rv Revalidator, st storage.Store) *Service {
+	return &Service{pool: pool, q: q, audit: audit, rv: rv, store: st}
 }
 
 func authorize(ctx context.Context) (store.AdminUser, error) {

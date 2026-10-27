@@ -356,3 +356,60 @@ func adminProductJSON(p catalogadmin.Product) api.AdminProduct {
 	}
 	return out
 }
+
+var pImageTooLarge = problem(413, "image_too_large", "Images must be 10 MB or smaller")
+
+func (s *Server) AdminUploadImage(ctx context.Context, r api.AdminUploadImageRequestObject) (api.AdminUploadImageResponseObject, error) {
+	err := s.CatalogAdmin.UploadImage(ctx, r.Id, r.Params.Alt, r.Body)
+	if errors.Is(err, catalogadmin.ErrTooLarge) {
+		return api.AdminUploadImage413ApplicationProblemPlusJSONResponse(pImageTooLarge), nil
+	}
+	return writeProduct(s, ctx, r.Id, err,
+		func(p api.AdminProduct) api.AdminUploadImageResponseObject {
+			return api.AdminUploadImage201JSONResponse{AdminProductJSONResponse: api.AdminProductJSONResponse(p)}
+		},
+		func(p api.Problem) api.AdminUploadImageResponseObject {
+			switch p.Status {
+			case 403:
+				return api.AdminUploadImage403ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(p)}
+			case 404:
+				return api.AdminUploadImage404ApplicationProblemPlusJSONResponse(p)
+			}
+			return api.AdminUploadImage422ApplicationProblemPlusJSONResponse(p)
+		})
+}
+
+func (s *Server) AdminSetImages(ctx context.Context, r api.AdminSetImagesRequestObject) (api.AdminSetImagesResponseObject, error) {
+	order := make([]catalogadmin.ImageOrder, 0, len(r.Body.Images))
+	for _, i := range r.Body.Images {
+		order = append(order, catalogadmin.ImageOrder{ID: i.Id, Alt: i.Alt})
+	}
+	err := s.CatalogAdmin.SetImages(ctx, r.Id, order)
+	return writeProduct(s, ctx, r.Id, err,
+		func(p api.AdminProduct) api.AdminSetImagesResponseObject {
+			return api.AdminSetImages200JSONResponse{AdminProductJSONResponse: api.AdminProductJSONResponse(p)}
+		},
+		func(p api.Problem) api.AdminSetImagesResponseObject {
+			switch p.Status {
+			case 403:
+				return api.AdminSetImages403ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(p)}
+			case 404:
+				return api.AdminSetImages404ApplicationProblemPlusJSONResponse(p)
+			}
+			return api.AdminSetImages422ApplicationProblemPlusJSONResponse(p)
+		})
+}
+
+func (s *Server) AdminDeleteImage(ctx context.Context, r api.AdminDeleteImageRequestObject) (api.AdminDeleteImageResponseObject, error) {
+	err := s.CatalogAdmin.DeleteImage(ctx, r.Id, r.ImageId)
+	return writeProduct(s, ctx, r.Id, err,
+		func(p api.AdminProduct) api.AdminDeleteImageResponseObject {
+			return api.AdminDeleteImage200JSONResponse{AdminProductJSONResponse: api.AdminProductJSONResponse(p)}
+		},
+		func(p api.Problem) api.AdminDeleteImageResponseObject {
+			if p.Status == 403 {
+				return api.AdminDeleteImage403ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(p)}
+			}
+			return api.AdminDeleteImage404ApplicationProblemPlusJSONResponse(p)
+		})
+}

@@ -201,11 +201,12 @@ type ProductAttribute struct {
 }
 
 type ProductImage struct {
-	ID        uuid.UUID
-	ProductID uuid.UUID
-	Url       string
-	Alt       string
-	Position  int32
+	ID         uuid.UUID
+	ProductID  uuid.UUID
+	Url        string
+	Alt        string
+	Position   int32
+	StorageKey string
 }
 
 type ProductRelation struct {

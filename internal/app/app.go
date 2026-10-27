@@ -3,9 +3,11 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,8 +24,17 @@ import (
 	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
 	"github.com/pinnacleverve/api/internal/platform/session"
+	"github.com/pinnacleverve/api/internal/storage"
 	"github.com/pinnacleverve/api/internal/store"
 )
+
+// bodyLimit caps request bodies at 1 MiB, except image uploads (10 MiB + headroom).
+func bodyLimit(r *http.Request) int64 {
+	if r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/api/v1/admin/products/") && strings.HasSuffix(r.URL.Path, "/images") {
+		return catalogadmin.MaxImageBytes + 1<<10
+	}
+	return 1 << 20
+}
 
 // App is the assembled service: the HTTP handler plus background work.
 type App struct {
@@ -60,8 +71,9 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		Admin:   admin.NewService(q, log),
 		Log:     log,
 	}
+	media := storage.Local{Dir: cfg.MediaDir, URLPrefix: "/media"}
 	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin,
-		catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log})
+		catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log}, media)
 
 	spec, err := api.GetSwagger()
 	if err != nil {
@@ -71,6 +83,13 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		SilenceServersWarning: true,
 		Options:               openapi3filter.Options{AuthenticationFunc: openapi3filter.NoopAuthenticationFunc},
 		ErrorHandlerWithOpts: func(_ context.Context, err error, w http.ResponseWriter, _ *http.Request, opts middleware.ErrorHandlerOpts) {
+			// The validator reads the body first; hitting the size cap surfaces here (sometimes wrapped as
+			// a "security requirements" failure), so report it as what it is.
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) || strings.Contains(err.Error(), "request body too large") {
+				httpx.WriteProblem(w, httpx.Problem{Title: "Request body too large", Status: http.StatusRequestEntityTooLarge, Code: "payload_too_large"})
+				return
+			}
 			code := "validation_failed"
 			if opts.StatusCode == http.StatusNotFound {
 				code = "not_found"
@@ -81,12 +100,16 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 
 	handler := httpx.Chain(srv.Handler(http.NewServeMux()),
 		httpx.Observe(log),
-		httpx.Harden(1<<20),
+		httpx.Harden(bodyLimit),
 		httpx.SameOrigin(cfg.AllowedOrigins),
 		session.Middleware(cfg.CookieSecure, cart.Persister(q)),
 		srv.Admin.Middleware(cfg.CookieSecure),
 		httpapi.CaptureWebhook,
 		validate,
 	)
-	return &App{Handler: handler, Orders: srv.Orders}, nil
+	// /media serves uploaded files (proxied by the storefront); everything else is the API.
+	root := http.NewServeMux()
+	root.Handle("/media/", httpx.Chain(media.Handler(), httpx.Observe(log)))
+	root.Handle("/", handler)
+	return &App{Handler: root, Orders: srv.Orders}, nil
 }

@@ -1,0 +1,687 @@
+openapi: 3.0.3
+info:
+  title: Pinnacle Verve API
+  version: 0.1.0
+  description: |
+    Storefront API. All money values are integer paise (INR × 100) and GST-inclusive.
+    State-changing requests require `Content-Type: application/json` and a same-site Origin.
+    Cart and guest orders belong to the anonymous session cookie `pv_sid`.
+servers:
+  - url: /api/v1
+tags:
+  - name: system
+  - name: catalog
+  - name: cart
+  - name: orders
+  - name: payments
+  - name: marketing
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service and database are reachable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+        "503": { $ref: "#/components/responses/Problem" }
+
+  /categories:
+    get:
+      tags: [catalog]
+      operationId: listCategories
+      responses:
+        "200":
+          description: Active categories
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Category" }
+
+  /categories/{slug}:
+    get:
+      tags: [catalog]
+      operationId: getCategory
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Category with its filter definitions
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CategoryDetail" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /products:
+    get:
+      tags: [catalog]
+      operationId: listProducts
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string, pattern: "^[a-z0-9-]{1,64}$" }
+        - name: filter
+          in: query
+          description: Repeatable facet filter `key:value`, e.g. `material:solid-teak`.
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 20
+            items: { type: string, pattern: "^[a-z0-9-]{1,40}:[a-z0-9-]{1,60}$" }
+        - name: minPrice
+          in: query
+          schema: { type: integer, format: int64, minimum: 0 }
+        - name: maxPrice
+          in: query
+          schema: { type: integer, format: int64, minimum: 0 }
+        - name: inStock
+          in: query
+          schema: { type: boolean }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [featured, price_asc, price_desc, rating, newest]
+            default: featured
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 48, default: 12 }
+      responses:
+        "200":
+          description: Paged product list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProductList" }
+        "400": { $ref: "#/components/responses/Problem" }
+
+  /products/{slug}:
+    get:
+      tags: [catalog]
+      operationId: getProduct
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Product with options and variants
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /cart:
+    get:
+      tags: [cart]
+      operationId: getCart
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+
+  /cart/items:
+    post:
+      tags: [cart]
+      operationId: addCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddCartItemRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /cart/items/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [cart]
+      operationId: updateCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCartItemRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [cart]
+      operationId: removeCartItem
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /cart/addons:
+    put:
+      tags: [cart]
+      operationId: setCartAddons
+      description: Replace the set of selected service add-ons (e.g. white-glove wall mount).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetCartAddonsRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /addons:
+    get:
+      tags: [cart]
+      operationId: listAddons
+      responses:
+        "200":
+          description: Purchasable service add-ons
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Addon" }
+
+  /orders:
+    post:
+      tags: [orders]
+      operationId: createOrder
+      description: Converts the session cart into an order and opens a payment session. Retrying with the same Idempotency-Key returns the original order.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 64, pattern: "^[A-Za-z0-9_-]+$" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateOrderRequest" }
+      responses:
+        "201":
+          description: Order created; client must complete payment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderCreated" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /orders/{ref}:
+    get:
+      tags: [orders]
+      operationId: getOrder
+      parameters:
+        - name: ref
+          in: path
+          required: true
+          schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+      responses:
+        "200":
+          description: Order owned by the current session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /payments/mock/{providerOrderId}/complete:
+    post:
+      tags: [payments]
+      operationId: completeMockPayment
+      description: Development only (PAYMENT_PROVIDER=mock). Simulates the gateway by sending a signed webhook through the real webhook path.
+      parameters:
+        - name: providerOrderId
+          in: path
+          required: true
+          schema: { type: string, maxLength: 64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome]
+              properties:
+                outcome: { type: string, enum: [success, failure] }
+      responses:
+        "204": { description: Webhook processed }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /payments/webhooks/{provider}:
+    post:
+      tags: [payments]
+      operationId: receivePaymentWebhook
+      description: Gateway callback. Body is verified against the provider signature header before parsing.
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, enum: [mock, razorpay] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { description: Accepted (also returned for duplicate events) }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /newsletter/subscriptions:
+    post:
+      tags: [marketing]
+      operationId: subscribeNewsletter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { $ref: "#/components/schemas/Email" }
+      responses:
+        "202": { description: Subscribed (idempotent) }
+        "422": { $ref: "#/components/responses/Problem" }
+
+components:
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z0-9-]{1,80}$" }
+
+  responses:
+    Problem:
+      description: Error (RFC 9457 problem details)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Cart:
+      description: Current session cart
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Cart" }
+
+  schemas:
+    Paise:
+      type: integer
+      format: int64
+      minimum: 0
+      description: Amount in paise (₹1 = 100).
+
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+
+    Problem:
+      type: object
+      required: [title, status, code]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code:
+          type: string
+          description: Stable machine-readable code, e.g. `out_of_stock`, `validation_failed`.
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok] }
+
+    Image:
+      type: object
+      required: [url, alt]
+      properties:
+        url: { type: string }
+        alt: { type: string }
+
+    Badge:
+      type: object
+      required: [label, tone]
+      properties:
+        label: { type: string }
+        tone: { type: string, enum: [dark, gold, light] }
+
+    Category:
+      type: object
+      required: [slug, name, productCount]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        eyebrow: { type: string }
+        description: { type: string }
+        productCount: { type: integer }
+
+    CategoryDetail:
+      allOf:
+        - $ref: "#/components/schemas/Category"
+        - type: object
+          required: [facets]
+          properties:
+            facets:
+              type: array
+              items: { $ref: "#/components/schemas/Facet" }
+
+    Facet:
+      type: object
+      required: [key, label, kind, values]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [multi, single, swatch] }
+        values:
+          type: array
+          items: { $ref: "#/components/schemas/FacetValue" }
+
+    FacetValue:
+      type: object
+      required: [value, label, count]
+      properties:
+        value: { type: string }
+        label: { type: string }
+        swatchHex: { type: string }
+        count: { type: integer }
+
+    CategoryRef:
+      type: object
+      required: [slug, name]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+
+    ProductSummary:
+      type: object
+      required: [id, slug, name, image, badges, pricePaise, mrpPaise, ratingAvg, ratingCount, inStock, defaultVariantId]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        subtitle: { type: string, description: Short feature line, e.g. "Dual French Cleats • 5mm Ultra-HD" }
+        materialLabel: { type: string }
+        sizeLabel: { type: string }
+        image: { $ref: "#/components/schemas/Image" }
+        badges:
+          type: array
+          items: { $ref: "#/components/schemas/Badge" }
+        pricePaise: { $ref: "#/components/schemas/Paise" }
+        mrpPaise: { $ref: "#/components/schemas/Paise" }
+        ratingAvg: { type: number, format: double }
+        ratingCount: { type: integer }
+        inStock: { type: boolean }
+        lowStock: { type: integer, description: Units left when stock is low; absent otherwise. }
+        shippingNote: { type: string }
+        defaultVariantId: { type: string, format: uuid }
+
+    ProductList:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ProductSummary" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+
+    ProductOption:
+      type: object
+      required: [code, name, kind, values]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [chip, swatch] }
+        values:
+          type: array
+          items: { $ref: "#/components/schemas/ProductOptionValue" }
+
+    ProductOptionValue:
+      type: object
+      required: [code, label]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        detail: { type: string, description: Secondary line, e.g. dimensions }
+        swatchHex: { type: string }
+
+    Variant:
+      type: object
+      required: [id, sku, options, pricePaise, mrpPaise, inStock]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        options:
+          type: object
+          description: Map of option code → value code.
+          additionalProperties: { type: string }
+        pricePaise: { $ref: "#/components/schemas/Paise" }
+        mrpPaise: { $ref: "#/components/schemas/Paise" }
+        inStock: { type: boolean }
+        lowStock: { type: integer }
+
+    ProductFeature:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string }
+        body: { type: string }
+
+    ProductDetail:
+      allOf:
+        - $ref: "#/components/schemas/ProductSummary"
+        - type: object
+          required: [category, description, images, options, variants, features, gstRatePercent]
+          properties:
+            category: { $ref: "#/components/schemas/CategoryRef" }
+            series: { type: string }
+            description: { type: string }
+            images:
+              type: array
+              items: { $ref: "#/components/schemas/Image" }
+            options:
+              type: array
+              items: { $ref: "#/components/schemas/ProductOption" }
+            variants:
+              type: array
+              items: { $ref: "#/components/schemas/Variant" }
+            features:
+              type: array
+              items: { $ref: "#/components/schemas/ProductFeature" }
+            gstRatePercent: { type: number, format: double }
+
+    AddCartItemRequest:
+      type: object
+      required: [variantId, quantity]
+      additionalProperties: false
+      properties:
+        variantId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+
+    UpdateCartItemRequest:
+      type: object
+      required: [quantity]
+      additionalProperties: false
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+
+    SetCartAddonsRequest:
+      type: object
+      required: [codes]
+      additionalProperties: false
+      properties:
+        codes:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items: { type: string, pattern: "^[a-z0-9-]{1,40}$" }
+
+    Addon:
+      type: object
+      required: [code, name, description, pricePaise]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        pricePaise: { $ref: "#/components/schemas/Paise" }
+
+    CartItem:
+      type: object
+      required: [id, variantId, productSlug, productName, variantLabel, image, unitPricePaise, quantity, lineTotalPaise, maxQuantity]
+      properties:
+        id: { type: string, format: uuid }
+        variantId: { type: string, format: uuid }
+        productSlug: { type: string }
+        productName: { type: string }
+        eyebrow: { type: string }
+        variantLabel: { type: string }
+        image: { $ref: "#/components/schemas/Image" }
+        unitPricePaise: { $ref: "#/components/schemas/Paise" }
+        quantity: { type: integer }
+        lineTotalPaise: { $ref: "#/components/schemas/Paise" }
+        maxQuantity: { type: integer, description: Purchasable units right now (min of stock and per-line limit). }
+
+    Totals:
+      type: object
+      required: [subtotalPaise, discountPaise, shippingPaise, addonsPaise, taxIncludedPaise, totalPaise]
+      properties:
+        subtotalPaise: { $ref: "#/components/schemas/Paise" }
+        discountPaise: { $ref: "#/components/schemas/Paise" }
+        shippingPaise: { $ref: "#/components/schemas/Paise" }
+        addonsPaise: { $ref: "#/components/schemas/Paise" }
+        taxIncludedPaise:
+          type: integer
+          format: int64
+          minimum: 0
+          description: GST contained in the total, in paise (prices are tax-inclusive).
+        totalPaise: { $ref: "#/components/schemas/Paise" }
+
+    Cart:
+      type: object
+      required: [items, addons, totals, itemCount]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItem" }
+        addons:
+          type: array
+          items: { $ref: "#/components/schemas/Addon" }
+        totals: { $ref: "#/components/schemas/Totals" }
+        itemCount: { type: integer }
+        whiteGlove: { $ref: "#/components/schemas/WhiteGloveProgress" }
+
+    WhiteGloveProgress:
+      type: object
+      description: Progress toward the complimentary white-glove installation tier.
+      required: [thresholdPaise, remainingPaise]
+      properties:
+        thresholdPaise: { $ref: "#/components/schemas/Paise" }
+        remainingPaise: { $ref: "#/components/schemas/Paise" }
+
+    Address:
+      type: object
+      required: [fullName, phone, line1, city, state, pincode]
+      additionalProperties: false
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 120 }
+        phone: { type: string, pattern: "^[6-9][0-9]{9}$", description: Indian mobile number without +91. }
+        line1: { type: string, minLength: 3, maxLength: 200 }
+        line2: { type: string, maxLength: 200 }
+        city: { type: string, minLength: 2, maxLength: 80 }
+        state: { type: string, minLength: 2, maxLength: 80 }
+        pincode: { type: string, pattern: "^[1-9][0-9]{5}$" }
+
+    PaymentMethod:
+      type: string
+      enum: [upi, card, netbanking, emi, cod]
+
+    CreateOrderRequest:
+      type: object
+      required: [email, shippingAddress, paymentMethod]
+      additionalProperties: false
+      properties:
+        email: { $ref: "#/components/schemas/Email" }
+        shippingAddress: { $ref: "#/components/schemas/Address" }
+        gstin:
+          type: string
+          pattern: "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"
+        notes: { type: string, maxLength: 1000 }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+
+    OrderItem:
+      type: object
+      required: [productSlug, productName, variantLabel, sku, image, unitPricePaise, quantity, lineTotalPaise]
+      properties:
+        productSlug: { type: string }
+        productName: { type: string }
+        variantLabel: { type: string }
+        sku: { type: string }
+        image: { $ref: "#/components/schemas/Image" }
+        unitPricePaise: { $ref: "#/components/schemas/Paise" }
+        quantity: { type: integer }
+        lineTotalPaise: { $ref: "#/components/schemas/Paise" }
+
+    Order:
+      type: object
+      required: [ref, status, paymentStatus, fulfilmentStatus, createdAt, email, shippingAddress, items, addons, totals, paymentMethod]
+      properties:
+        ref: { type: string }
+        status: { type: string, enum: [pending_payment, placed, cancelled] }
+        paymentStatus: { type: string, enum: [pending, paid, failed, refunded] }
+        fulfilmentStatus: { type: string, enum: [unfulfilled, preparing, in_transit, delivered, installed] }
+        createdAt: { type: string, format: date-time }
+        email: { type: string }
+        shippingAddress: { $ref: "#/components/schemas/Address" }
+        gstin: { type: string }
+        notes: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        addons:
+          type: array
+          items: { $ref: "#/components/schemas/Addon" }
+        totals: { $ref: "#/components/schemas/Totals" }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+
+    PaymentSession:
+      type: object
+      required: [provider, providerOrderId, amountPaise, currency]
+      properties:
+        provider: { type: string, enum: [mock, razorpay] }
+        providerOrderId: { type: string }
+        amountPaise: { $ref: "#/components/schemas/Paise" }
+        currency: { type: string, enum: [INR] }
+        keyId: { type: string, description: Public key for the provider's client SDK (razorpay only). }
+
+    OrderCreated:
+      type: object
+      required: [order, payment]
+      properties:
+        order: { $ref: "#/components/schemas/Order" }
+        payment: { $ref: "#/components/schemas/PaymentSession" }

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/pinnacleverve/api/internal/api"
 	"github.com/pinnacleverve/api/internal/cart"
@@ -66,6 +67,14 @@ func (s *Server) SetCartAddons(ctx context.Context, r api.SetCartAddonsRequestOb
 	return api.SetCartAddons200JSONResponse{CartJSONResponse: cartJSON(c)}, nil
 }
 
+func (s *Server) SetCartNotes(ctx context.Context, r api.SetCartNotesRequestObject) (api.SetCartNotesResponseObject, error) {
+	c, err := s.Cart.SetNotes(ctx, strings.TrimSpace(r.Body.Notes))
+	if err != nil {
+		return nil, err
+	}
+	return api.SetCartNotes200JSONResponse{CartJSONResponse: cartJSON(c)}, nil
+}
+
 func (s *Server) ListAddons(ctx context.Context, _ api.ListAddonsRequestObject) (api.ListAddonsResponseObject, error) {
 	rows, err := s.Cart.Addons(ctx)
 	if err != nil {
@@ -84,6 +93,7 @@ func cartJSON(c cart.Cart) api.CartJSONResponse {
 		Totals: totalsJSON(c.Totals.SubtotalPaise, c.Totals.DiscountPaise, c.Totals.ShippingPaise,
 			c.Totals.AddonsPaise, c.Totals.TaxIncludedPaise, c.Totals.TotalPaise),
 		ItemCount:  c.ItemCount,
+		Notes:      c.Notes,
 		WhiteGlove: &api.WhiteGloveProgress{ThresholdPaise: c.WhiteGloveThreshold, RemainingPaise: c.WhiteGloveRemaining},
 	}
 	for _, l := range c.Lines {

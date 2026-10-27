@@ -41,6 +41,7 @@ type Addon = store.ListActiveAddonsByCodesRow
 
 type Cart struct {
 	ID                  uuid.UUID // zero when the session has no cart yet
+	Notes               string    // installation instructions
 	Lines               []Line
 	Addons              []Addon
 	Totals              pricing.Totals
@@ -78,7 +79,7 @@ func (s *Service) Get(ctx context.Context) (Cart, error) {
 	if err != nil {
 		return Cart{}, err
 	}
-	return Load(ctx, s.q, row.ID, row.AddonCodes, s.cfg)
+	return Load(ctx, s.q, row, s.cfg)
 }
 
 func (s *Service) Add(ctx context.Context, variantID uuid.UUID, qty int) (Cart, error) {
@@ -168,6 +169,17 @@ func (s *Service) SetAddons(ctx context.Context, codes []string) (Cart, error) {
 	return s.Get(ctx)
 }
 
+func (s *Service) SetNotes(ctx context.Context, notes string) (Cart, error) {
+	cartID, err := s.ensureCart(ctx)
+	if err != nil {
+		return Cart{}, err
+	}
+	if err := s.q.SetCartNotes(ctx, store.SetCartNotesParams{ID: cartID, Notes: notes}); err != nil {
+		return Cart{}, err
+	}
+	return s.Get(ctx)
+}
+
 func (s *Service) Addons(ctx context.Context) ([]store.ListActiveAddonsRow, error) {
 	return s.q.ListActiveAddons(ctx)
 }
@@ -196,18 +208,20 @@ func (s *Service) existingCart(ctx context.Context) (uuid.UUID, error) {
 func (s *Service) empty() Cart { return Build(uuid.Nil, nil, nil, s.cfg) }
 
 // Load reads a cart's lines and add-ons with q (which may be transaction-bound) and prices them.
-func Load(ctx context.Context, q *store.Queries, cartID uuid.UUID, addonCodes []string, cfg config.Config) (Cart, error) {
-	rows, err := q.ListCartLines(ctx, cartID)
+func Load(ctx context.Context, q *store.Queries, c store.GetCartBySessionRow, cfg config.Config) (Cart, error) {
+	rows, err := q.ListCartLines(ctx, c.ID)
 	if err != nil {
 		return Cart{}, err
 	}
 	addons := []Addon{}
-	if len(addonCodes) > 0 {
-		if addons, err = q.ListActiveAddonsByCodes(ctx, addonCodes); err != nil {
+	if len(c.AddonCodes) > 0 {
+		if addons, err = q.ListActiveAddonsByCodes(ctx, c.AddonCodes); err != nil {
 			return Cart{}, err
 		}
 	}
-	return Build(cartID, rows, addons, cfg), nil
+	out := Build(c.ID, rows, addons, cfg)
+	out.Notes = c.Notes
+	return out, nil
 }
 
 // Build prices cart rows. It is pure so order creation prices exactly what the cart showed.

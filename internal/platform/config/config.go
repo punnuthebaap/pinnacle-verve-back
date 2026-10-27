@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -24,6 +25,10 @@ type Config struct {
 	ShippingPaise            int64
 	AddonGSTRateBps          int64
 	EnabledPaymentMethods    []string
+
+	// Unpaid orders are cancelled and their stock released after this long.
+	PendingOrderTTL time.Duration
+	SweepInterval   time.Duration
 }
 
 func (c Config) IsProduction() bool { return c.Env == "production" }
@@ -42,6 +47,8 @@ func Load() (Config, error) {
 		ShippingPaise:            getInt("SHIPPING_PAISE", 0),
 		AddonGSTRateBps:          getInt("ADDON_GST_RATE_BPS", 1800),
 		EnabledPaymentMethods:    getList("ENABLED_PAYMENT_METHODS", "upi,card,netbanking,emi"),
+		PendingOrderTTL:          time.Duration(getInt("PENDING_ORDER_TTL_MINUTES", 30)) * time.Minute,
+		SweepInterval:            time.Minute,
 	}
 	if c.IsProduction() {
 		if c.PaymentProvider == "mock" {

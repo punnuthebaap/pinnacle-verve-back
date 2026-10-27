@@ -31,6 +31,7 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
 1. `POST /orders` → order `pending_payment`, stock reserved, `payment.providerOrderId` returned.
 2. Client pays with the gateway (mock: `POST /payments/mock/{providerOrderId}/complete`, development only).
 3. Gateway → `POST /payments/webhooks/{provider}` → order `placed`/`paid` and cart cleared, or `cancelled`/`failed` and stock released.
+   Unpaid for longer than the reservation window → `cancelled`/`expired` and stock released; a later capture is flagged for manual refund.
 4. Client polls `GET /orders/{ref}` until `paymentStatus` is not `pending`.
 
 ## Changing the contract

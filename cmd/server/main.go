@@ -43,13 +43,14 @@ func run(log *slog.Logger) error {
 		}
 	}
 
-	handler, err := app.NewHandler(cfg, log, pool)
+	a, err := app.New(cfg, log, pool)
 	if err != nil {
 		return err
 	}
+	go a.Orders.RunExpirySweeper(ctx, cfg.PendingOrderTTL, cfg.SweepInterval)
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           handler,
+		Handler:           a.Handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,

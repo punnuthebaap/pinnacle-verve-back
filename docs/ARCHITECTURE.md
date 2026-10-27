@@ -40,7 +40,9 @@ Dependency direction: `httpapi → services (catalog|cart|order) → store`. Ser
 - Stock is reserved with a conditional `UPDATE … WHERE stock >= qty` inside the order transaction; released when payment fails.
 - Order creation is idempotent per (session, Idempotency-Key). Webhooks are idempotent per (provider, event id) and lock the payment row.
 - Payment amount mismatch on capture is recorded and left for manual review (never auto-accepted).
+- Unpaid orders expire after `PENDING_ORDER_TTL_MINUTES` (default 30): a per-minute sweeper claims them with `SKIP LOCKED`, releases stock and sets `cancelled` / `expired`. A capture that arrives after expiry is recorded as `payment_captured_after_expiry` for a manual refund — never auto-accepted.
+- Cart `notes` (installation instructions) are copied into the order when checkout sends none, and cleared with the cart after payment.
 
 ## Known gaps (tracked in HANDOFF)
 
-Pending-order expiry (release reserved stock), gateway call outside the DB transaction, rate limiting, coupons, CGST/SGST split.
+Gateway call outside the DB transaction, rate limiting, coupons, CGST/SGST split.

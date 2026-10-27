@@ -1,6 +1,20 @@
 package catalog
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/pinnacleverve/api/internal/store"
+)
+
+func TestSummarize(t *testing.T) {
+	got := summarize([]store.ReviewDistributionRow{{Rating: 5, Reviews: 101}, {Rating: 4, Reviews: 9}, {Rating: 3, Reviews: 2}})
+	if got.Count != 112 || got.Avg != 4.9 || got.Distribution != [5]int{101, 9, 2, 0, 0} {
+		t.Fatalf("summarize = %+v", got)
+	}
+	if empty := summarize(nil); empty.Count != 0 || empty.Avg != 0 {
+		t.Fatalf("empty summary = %+v", empty)
+	}
+}
 
 func TestVariantLabel(t *testing.T) {
 	opts := []byte(`[

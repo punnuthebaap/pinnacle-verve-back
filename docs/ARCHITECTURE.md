@@ -30,6 +30,8 @@ Dependency direction: `httpapi → services (catalog|cart|order) → store`. Ser
 
 - Catalogue: `categories`, `category_facets` (which filters a category shows), `products` (badges/features/options as JSONB), `product_variants` (SKU, price, MRP, stock, option map), `product_images`, `product_attributes` (facet values).
 - Commerce: `sessions` (hashed token), `carts`, `cart_items`, `addons`, `orders` (status / payment_status / fulfilment_status kept separate; totals snapshotted), `order_items` (price/name snapshot), `order_addons`, `order_events` (audit timeline), `payments`, `payment_events` (webhook de-dupe).
+- Product-page content (migration 00002): `products.specs` / `care` / `facts` JSONB; `product_reviews` (rating-only rows allowed; `status` moderation); `product_relations` ("pairs well with").
+- `products.rating_avg` / `rating_count` are derived from published reviews — recompute them whenever reviews change. The reviews endpoint computes its summary from the same rows.
 - The display price of a product is its first variant by `position`.
 
 ## Integrity rules

@@ -164,6 +164,65 @@ FROM (VALUES
 ) AS a(slug, key, value, label, hex)
 JOIN products p ON p.slug = a.slug;
 
+-- Product-page content for Contour (Figma "Engineered with Sculptural Precision" + care section).
+-- The other three spec accordion sections are collapsed in Figma, so their copy is missing (ROADMAP B6).
+UPDATE products SET
+  specs = '[
+    {"title":"Materials & Glass Provenance",
+     "body":"We use pure copper-free, lead-free 5mm Saint-Gobain float glass engineered with a multi-layered silver backing that resists black-edge oxidation even in coastal cities like Mumbai, Chennai, and Kochi.",
+     "bullets":["Aircraft-grade aluminum structural chassis (100% rustproof in continuous steam).","Solid brass outer rim, shaped by three successive hand-rolling mandrels.","Shatter-proof safety vinyl membrane laminated across the entire back panel."]}
+  ]',
+  facts = '[{"label":"Total Depth","value":"1.8 inches (45mm)"},{"label":"Net Weight","value":"8.4 kg (18.5 lbs)"}]',
+  care = '[
+    {"eyebrow":"Reflective Clarity","title":"Glass & Mirror Care","body":"Mist pure water or non-ammonia cleanser onto a microfiber cloth first; never spray fluid directly onto the glass perimeter or bezel seam."},
+    {"eyebrow":"Patina Longevity","title":"Champagne Brass Rim","body":"Dust weekly with a soft dry flannel. Brass naturally matures into a subtle warm patina; apply non-abrasive natural wax once annually to maintain luster."},
+    {"eyebrow":"Thermal Efficiency","title":"Anti-Fog Film & Energy Protocol","body":"Activate 2 minutes before bathing. The integrated 25W PTC heating element operates with auto-standby and consumes negligible power, reaching optimal optical clarity rapidly."},
+    {"eyebrow":"Structural Integrity","title":"Re-Sealing & Cleat Inspection","body":"Inspect French cleat wall anchors and verify spirit leveling annually. Inspect perimeter silicone seals to safeguard against mineral hard-water deposition in coastal climates."},
+    {"eyebrow":"Circuit Safety","title":"Electrical & Demister Core","body":"Powered by 220–240V moisture-shielded transformer. Ensure the demister toggle is switched off when not in active use."},
+    {"eyebrow":"Climate Resilience","title":"Monsoon Moisture Management","body":"IP54 sealed against splashing and steam. In coastal cities, ensure cross-ventilation after steam baths to maintain longevity."}
+  ]'
+WHERE slug = 'contour-architectural-vanity-mirror';
+
+-- Written reviews shown in the Figma product page.
+INSERT INTO product_reviews (product_id, rating, author_name, author_meta, body, variant_label, verified, status, created_at)
+SELECT p.id, r.rating, r.author, r.meta, r.body, r.variant, true, 'published', r.created::timestamptz
+FROM products p
+JOIN (VALUES
+  ('contour-architectural-vanity-mirror', 5, 'Rohit K.', 'Principal Architect, Delhi NCR',
+   'The brass curvature is exceptionally finished with no visible joints or machine marks. The 3000K backlight has zero hotspotting—the diffusion channel makes it feel like an architectural light cove rather than an appliance. Delivered to Delhi in a heavy wooden crate with zero issues.',
+   'Brushed Champagne Brass (36" x 24")', '2025-07-14'),
+  ('contour-architectural-vanity-mirror', 5, 'Suhasini Mehta', 'Homeowner, Juhu, Mumbai',
+   'Living right across the Arabian Sea, our old mirrors suffered from edge corrosion within months. The Pinnacle Contour has been in our guest powder room for over six monsoon weeks now and remains pristine. The anti-fog heating element works like magic.',
+   'Brushed Champagne Brass (32" x 22")', '2025-08-02')
+) AS r(slug, rating, author, meta, body, variant, created) ON r.slug = p.slug;
+
+-- Rating-only fixtures so each product's aggregate matches its Figma count/average:
+-- round(count × (avg − 4)) five-star ratings, the rest four-star.
+INSERT INTO product_reviews (product_id, rating, verified, status, created_at)
+SELECT p.id, CASE WHEN g <= round(p.rating_count * (p.rating_avg - 4)) THEN 5 ELSE 4 END, true, 'published',
+       timestamptz '2025-09-01' - g * interval '1 day'
+FROM products p
+CROSS JOIN LATERAL generate_series(1, p.rating_count - (SELECT count(*) FROM product_reviews r WHERE r.product_id = p.id)) AS g
+WHERE p.rating_count > 0;
+
+-- products.rating_avg / rating_count are derived from published reviews (single source of truth).
+UPDATE products p SET rating_avg = a.avg, rating_count = a.cnt
+FROM (SELECT product_id, round(avg(rating)::numeric, 1) AS avg, count(*)::int AS cnt
+      FROM product_reviews WHERE status = 'published' GROUP BY product_id) a
+WHERE a.product_id = p.id;
+
+-- "Pairs well with": each mirror → top three lamps, each lamp → top three mirrors (by featured rank).
+INSERT INTO product_relations (product_id, related_id, position)
+SELECT p.id, o.id, o.pos
+FROM products p
+JOIN categories c ON c.id = p.category_id
+CROSS JOIN LATERAL (
+  SELECT q.id, row_number() OVER (ORDER BY q.rank)::int AS pos
+  FROM products q JOIN categories qc ON qc.id = q.category_id
+  WHERE qc.slug <> c.slug
+  ORDER BY q.rank LIMIT 3
+) o;
+
 -- Add-on prices are UNCONFIRMED (ROADMAP B4): checkout shows ₹499 for wall mount, cart page ₹999.
 INSERT INTO addons (code, name, description, price_paise, position) VALUES
 ('white-glove-mount', 'White-Glove Wall Mount', 'Laser-leveled hanging, rawlplug anchoring by Pinnacle verified technicians.', 49900, 1),

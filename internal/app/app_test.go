@@ -82,6 +82,39 @@ func TestPurchaseJourney(t *testing.T) {
 	}
 	c.do("GET", "/products/does-not-exist", "", nil, 404, nil)
 
+	var content struct {
+		Care  []struct{ Title string }
+		Facts []struct{ Label string }
+		Specs []struct{ Bullets []string }
+	}
+	c.do("GET", "/products/contour-architectural-vanity-mirror", "", nil, 200, &content)
+	if len(content.Care) != 6 || len(content.Facts) != 2 || len(content.Specs) != 1 || len(content.Specs[0].Bullets) != 3 {
+		t.Fatalf("unexpected product content: %+v", content)
+	}
+
+	var reviews struct {
+		Summary struct {
+			RatingAvg    float64
+			RatingCount  int
+			Distribution []struct{ Stars, Count int }
+		}
+		Items []struct{ AuthorName string }
+		Total int
+	}
+	c.do("GET", "/products/contour-architectural-vanity-mirror/reviews?pageSize=1", "", nil, 200, &reviews)
+	if reviews.Summary.RatingCount != 112 || reviews.Summary.RatingAvg != 4.9 || len(reviews.Summary.Distribution) != 5 ||
+		reviews.Summary.Distribution[0].Stars != 5 || reviews.Total != 2 || len(reviews.Items) != 1 || reviews.Items[0].AuthorName != "Suhasini Mehta" {
+		t.Fatalf("unexpected reviews: %+v", reviews)
+	}
+	c.do("GET", "/products/does-not-exist/reviews", "", nil, 404, nil)
+	c.do("GET", "/products/contour-architectural-vanity-mirror/reviews?pageSize=50", "", nil, 400, nil)
+
+	var related struct{ Items []struct{ Slug string } }
+	c.do("GET", "/products/contour-architectural-vanity-mirror/related", "", nil, 200, &related)
+	if len(related.Items) != 3 || related.Items[0].Slug != "aurelia-arc-desk-lamp" {
+		t.Fatalf("unexpected related: %+v", related)
+	}
+
 	// CSRF: foreign origin rejected; validation errors are problem+json.
 	c.origin = "https://evil.example"
 	c.do("POST", "/cart/items", "", map[string]any{"variantId": product.DefaultVariantID, "quantity": 1}, 403, nil)

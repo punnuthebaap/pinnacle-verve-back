@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
 	"slices"
 	"strings"
 
@@ -122,6 +123,61 @@ func (s *Service) Product(ctx context.Context, slug string) (Product, error) {
 		return p, ErrNotFound
 	}
 	return p, nil
+}
+
+type RatingSummary struct {
+	Avg          float64
+	Count        int
+	Distribution [5]int // index 0 = 5 stars … index 4 = 1 star
+}
+
+// Reviews returns the rating summary over all published ratings plus a page of written reviews.
+func (s *Service) Reviews(ctx context.Context, slug string, page, size int) (RatingSummary, []store.ListWrittenReviewsRow, int, error) {
+	var sum RatingSummary
+	id, err := s.q.GetActiveProductIDBySlug(ctx, slug)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return sum, nil, 0, ErrNotFound
+	}
+	if err != nil {
+		return sum, nil, 0, err
+	}
+	dist, err := s.q.ReviewDistribution(ctx, id)
+	if err != nil {
+		return sum, nil, 0, err
+	}
+	sum = summarize(dist)
+	rows, err := s.q.ListWrittenReviews(ctx, store.ListWrittenReviewsParams{ProductID: id, Lim: int32(size), Off: int32((page - 1) * size)})
+	if err != nil || len(rows) == 0 {
+		return sum, rows, 0, err
+	}
+	return sum, rows, int(rows[0].TotalCount), nil
+}
+
+func summarize(dist []store.ReviewDistributionRow) RatingSummary {
+	var s RatingSummary
+	total := 0
+	for _, d := range dist {
+		if d.Rating >= 1 && d.Rating <= 5 {
+			s.Distribution[5-d.Rating] = int(d.Reviews)
+			s.Count += int(d.Reviews)
+			total += int(d.Rating) * int(d.Reviews)
+		}
+	}
+	if s.Count > 0 {
+		s.Avg = math.Round(float64(total)/float64(s.Count)*10) / 10
+	}
+	return s
+}
+
+func (s *Service) Related(ctx context.Context, slug string) ([]store.ListRelatedProductsRow, error) {
+	id, err := s.q.GetActiveProductIDBySlug(ctx, slug)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.q.ListRelatedProducts(ctx, id)
 }
 
 // Option mirrors products.options JSON.

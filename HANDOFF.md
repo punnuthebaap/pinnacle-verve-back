@@ -25,7 +25,14 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 - ✅ Cart notes (`PUT /cart/notes`, copied into the order), pending-order expiry sweeper with late-capture flagging (migration 00003). Integration test `TestPendingOrderExpiry`.
 
+## Admin panel (decisions D32–D35)
+
+- ✅ A1 backend: admin users/roles/sessions/audit (migration 00004), `/api/v1/admin` session + users + audit endpoints, `cmd/admin create-owner`. Test `TestAdminAuth`.
+- ⬜ A1 frontend (sign-in, shell, users, audit) → A2 catalogue CRUD + image upload → A3 orders ops → A4 settings → A5 reviews/newsletter → A6 content.
+
 ## Known issues / gaps
+
+- Admin sign-in has no 2FA (owner decision); add IP-based rate limiting for password spraying in M7.
 
 - Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
@@ -37,5 +44,6 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. Move the gateway order call after commit (with retry) before Razorpay goes live.
-2. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.
+1. A2 catalogue admin API (categories, facets, products, variants, images via storage interface, relations).
+2. Move the gateway order call after commit (with retry) before Razorpay goes live.
+3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

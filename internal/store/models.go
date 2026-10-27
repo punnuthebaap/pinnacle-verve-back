@@ -20,6 +20,41 @@ type Addon struct {
 	Position    int32
 }
 
+type AdminAudit struct {
+	ID        int64
+	AdminID   pgtype.UUID
+	Action    string
+	Entity    string
+	EntityID  string
+	Data      json.RawMessage
+	Ip        string
+	CreatedAt pgtype.Timestamptz
+}
+
+type AdminSession struct {
+	ID        []byte
+	AdminID   uuid.UUID
+	Ip        string
+	UserAgent string
+	CreatedAt pgtype.Timestamptz
+	LastSeen  pgtype.Timestamptz
+	ExpiresAt pgtype.Timestamptz
+}
+
+type AdminUser struct {
+	ID             uuid.UUID
+	Email          string
+	Name           string
+	PasswordHash   string
+	Role           string
+	IsActive       bool
+	FailedAttempts int32
+	LockedUntil    pgtype.Timestamptz
+	LastLoginAt    pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
 type Cart struct {
 	ID         uuid.UUID
 	SessionID  []byte

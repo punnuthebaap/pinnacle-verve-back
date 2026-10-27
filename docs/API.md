@@ -26,6 +26,13 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
 - `POST /orders` requires an `Idempotency-Key` header (16–64 chars); a replay returns the original order.
 - Webhooks are authenticated by provider signature over the raw body, then de-duplicated by event id.
 
+## Admin API (`/api/v1/admin/*`)
+
+- Separate staff session: `POST /admin/session` sets `pv_admin` (httpOnly, `SameSite=Strict`, path `/api/v1/admin`, 12h absolute / 2h idle). Every other admin route returns `401 unauthenticated` without it; responses are `Cache-Control: no-store`.
+- Passwords: argon2id; ≥ 12 characters. 5 consecutive failures lock the account for 15 minutes (`429 account_locked`); unknown emails get the same `401 invalid_credentials` as wrong passwords.
+- Roles: `owner` (everything incl. users, settings, audit), `catalog`, `orders`, `content` (own area only) → `403 forbidden` otherwise. The last active owner can't be demoted or disabled (`409 last_owner`).
+- Every sign-in attempt and change is written to the audit log (`GET /admin/audit`, owner only).
+
 ## Payment flow (M1: mock provider)
 
 1. `POST /orders` → order `pending_payment`, stock reserved, `payment.providerOrderId` returned.

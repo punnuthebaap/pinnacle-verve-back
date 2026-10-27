@@ -17,7 +17,14 @@ _Last updated: 2026-10-27 · Current milestone: M2 (next)_
 - `go test ./...`: pass — pricing, payment signature, variant label, and `TestPurchaseJourney` (real DB: filters, 404s, CSRF 403, validation 400, stock 409, add-on totals, idempotent order replay, forged webhook 401, mock capture, cart cleared, stock decremented, cross-session order 404).
 - Exercised by frontend Playwright E2E (3/3 pass).
 
+## M2 progress
+
+- ✅ Product content API: `specs`/`care`/`facts` on product detail, `GET /products/{slug}/reviews` (summary + written reviews), `GET /products/{slug}/related`; migration 00002; ratings derived from reviews; integration test extended.
+
 ## Known issues / gaps
+
+- Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
+- Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
 
 - Pending orders never expire → abandoned checkouts keep stock reserved. Add a sweeper (cancel + release after N minutes) in M4.
 - Gateway order creation runs inside the DB transaction (fine for mock; move after commit for Razorpay).
@@ -28,6 +35,5 @@ _Last updated: 2026-10-27 · Current milestone: M2 (next)_
 
 ## Next steps (in order)
 
-1. M2 APIs: reviews (table + `GET /products/{slug}/reviews` + summary), related products (`GET /products/{slug}/related`), product specs/care content fields.
-2. Pending-order expiry job; move gateway call after commit.
-3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.
+1. Pending-order expiry job; move gateway call after commit.
+2. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

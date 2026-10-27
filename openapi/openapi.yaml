@@ -120,6 +120,46 @@ paths:
               schema: { $ref: "#/components/schemas/ProductDetail" }
         "404": { $ref: "#/components/responses/Problem" }
 
+  /products/{slug}/reviews:
+    get:
+      tags: [catalog]
+      operationId: listProductReviews
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 5 }
+      responses:
+        "200":
+          description: Rating summary (all published ratings) and written reviews, newest first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReviewPage" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /products/{slug}/related:
+    get:
+      tags: [catalog]
+      operationId: listRelatedProducts
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Curated "pairs well with" products
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ProductSummary" }
+        "404": { $ref: "#/components/responses/Problem" }
+
   /cart:
     get:
       tags: [cart]
@@ -493,11 +533,77 @@ components:
         title: { type: string }
         body: { type: string }
 
+    SpecSection:
+      type: object
+      required: [title, body, bullets]
+      properties:
+        title: { type: string }
+        body: { type: string }
+        bullets:
+          type: array
+          items: { type: string }
+
+    CareNote:
+      type: object
+      required: [eyebrow, title, body]
+      properties:
+        eyebrow: { type: string }
+        title: { type: string }
+        body: { type: string }
+
+    ProductFact:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string }
+        value: { type: string }
+
+    Review:
+      type: object
+      required: [id, rating, authorName, body, verified, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        authorName: { type: string }
+        authorMeta: { type: string }
+        body: { type: string }
+        variantLabel: { type: string }
+        verified: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    RatingSummary:
+      type: object
+      required: [ratingAvg, ratingCount, distribution]
+      properties:
+        ratingAvg: { type: number, format: double }
+        ratingCount: { type: integer }
+        distribution:
+          type: array
+          description: One entry per star level, 5 down to 1.
+          items:
+            type: object
+            required: [stars, count]
+            properties:
+              stars: { type: integer }
+              count: { type: integer }
+
+    ReviewPage:
+      type: object
+      required: [summary, items, page, pageSize, total]
+      properties:
+        summary: { $ref: "#/components/schemas/RatingSummary" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Review" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer, description: Number of written reviews. }
+
     ProductDetail:
       allOf:
         - $ref: "#/components/schemas/ProductSummary"
         - type: object
-          required: [category, description, images, options, variants, features, gstRatePercent]
+          required: [category, description, images, options, variants, features, specs, care, facts, gstRatePercent]
           properties:
             category: { $ref: "#/components/schemas/CategoryRef" }
             series: { type: string }
@@ -514,6 +620,15 @@ components:
             features:
               type: array
               items: { $ref: "#/components/schemas/ProductFeature" }
+            specs:
+              type: array
+              items: { $ref: "#/components/schemas/SpecSection" }
+            care:
+              type: array
+              items: { $ref: "#/components/schemas/CareNote" }
+            facts:
+              type: array
+              items: { $ref: "#/components/schemas/ProductFact" }
             gstRatePercent: { type: number, format: double }
 
     AddCartItemRequest:

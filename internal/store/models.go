@@ -151,6 +151,9 @@ type Product struct {
 	Rank          int32
 	IsActive      bool
 	CreatedAt     pgtype.Timestamptz
+	Specs         json.RawMessage
+	Care          json.RawMessage
+	Facts         json.RawMessage
 }
 
 type ProductAttribute struct {
@@ -167,6 +170,25 @@ type ProductImage struct {
 	Url       string
 	Alt       string
 	Position  int32
+}
+
+type ProductRelation struct {
+	ProductID uuid.UUID
+	RelatedID uuid.UUID
+	Position  int32
+}
+
+type ProductReview struct {
+	ID           uuid.UUID
+	ProductID    uuid.UUID
+	Rating       int16
+	AuthorName   string
+	AuthorMeta   string
+	Body         string
+	VariantLabel string
+	Verified     bool
+	Status       string
+	CreatedAt    pgtype.Timestamptz
 }
 
 type ProductVariant struct {

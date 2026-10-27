@@ -44,7 +44,7 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (GetCatego
 }
 
 const getProductBySlug = `-- name: GetProductBySlug :one
-SELECT p.id, p.slug, p.category_id, p.name, p.subtitle, p.series, p.material_label, p.size_label, p.description, p.shipping_note, p.badges, p.features, p.options, p.gst_rate_bps, p.rating_avg, p.rating_count, p.rank, p.is_active, p.created_at, c.slug AS category_slug, c.name AS category_name
+SELECT p.id, p.slug, p.category_id, p.name, p.subtitle, p.series, p.material_label, p.size_label, p.description, p.shipping_note, p.badges, p.features, p.options, p.gst_rate_bps, p.rating_avg, p.rating_count, p.rank, p.is_active, p.created_at, p.specs, p.care, p.facts, c.slug AS category_slug, c.name AS category_name
 FROM products p
 JOIN categories c ON c.id = p.category_id
 WHERE p.slug = $1 AND p.is_active
@@ -70,6 +70,9 @@ type GetProductBySlugRow struct {
 	Rank          int32
 	IsActive      bool
 	CreatedAt     pgtype.Timestamptz
+	Specs         json.RawMessage
+	Care          json.RawMessage
+	Facts         json.RawMessage
 	CategorySlug  string
 	CategoryName  string
 }
@@ -97,6 +100,9 @@ func (q *Queries) GetProductBySlug(ctx context.Context, slug string) (GetProduct
 		&i.Rank,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.Specs,
+		&i.Care,
+		&i.Facts,
 		&i.CategorySlug,
 		&i.CategoryName,
 	)

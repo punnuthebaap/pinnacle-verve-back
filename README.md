@@ -20,6 +20,9 @@ Create the first admin owner (once; there are no default credentials):
 
 ```bash
 ADMIN_PASSWORD='choose-12+-chars' go run ./cmd/admin create-owner -email you@example.com -name "Your Name"
+
+# Local development / E2E only (refused unless APP_ENV=development): create or reset a known owner
+ADMIN_PASSWORD='e2e-owner-password' go run ./cmd/admin create-owner -email e2e-owner@example.com -name "E2E Owner" -dev-reset
 ```
 
 Windows without Docker (uses installed PostgreSQL binaries; data in `.local/pgdata`, git-ignored):

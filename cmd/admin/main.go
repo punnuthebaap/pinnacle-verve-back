@@ -4,6 +4,9 @@
 //	ADMIN_PASSWORD='…' go run ./cmd/admin create-owner -email owner@example.com -name "Owner Name"
 //
 // Further accounts are created by an owner in the admin panel.
+//
+// -dev-reset (APP_ENV=development only) upserts the given owner and resets its password, for local
+// development and end-to-end tests. It is refused in production.
 package main
 
 import (
@@ -33,6 +36,7 @@ func run(args []string) error {
 	fs := flag.NewFlagSet("create-owner", flag.ContinueOnError)
 	email := fs.String("email", "", "owner email")
 	name := fs.String("name", "", "owner display name")
+	devReset := fs.Bool("dev-reset", false, "development only: create or reset this owner")
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
 	}
@@ -58,14 +62,28 @@ func run(args []string) error {
 		return err
 	}
 	q := store.New(pool)
-	if n, err := q.CountActiveOwners(ctx); err != nil {
-		return err
-	} else if n > 0 {
-		return fmt.Errorf("an active owner already exists; create further accounts in the admin panel")
-	}
 	hash, err := admin.HashPassword(password)
 	if err != nil {
 		return err
+	}
+	if *devReset {
+		if cfg.Env != "development" {
+			return fmt.Errorf("-dev-reset is only allowed with APP_ENV=development")
+		}
+		if u, err := q.GetAdminByEmail(ctx, *email); err == nil {
+			if err := q.SetAdminPassword(ctx, store.SetAdminPasswordParams{ID: u.ID, PasswordHash: hash}); err != nil {
+				return err
+			}
+			if _, err := q.UpdateAdmin(ctx, store.UpdateAdminParams{ID: u.ID, Name: u.Name, Role: "owner", IsActive: true}); err != nil {
+				return err
+			}
+			fmt.Printf("owner %s reset (development)\n", u.Email)
+			return nil
+		}
+	} else if n, err := q.CountActiveOwners(ctx); err != nil {
+		return err
+	} else if n > 0 {
+		return fmt.Errorf("an active owner already exists; create further accounts in the admin panel")
 	}
 	u, err := q.InsertAdmin(ctx, store.InsertAdminParams{Email: *email, Name: strings.TrimSpace(*name), PasswordHash: hash, Role: "owner"})
 	if err != nil {

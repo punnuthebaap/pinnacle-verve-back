@@ -1,6 +1,6 @@
 # Handoff — backend
 
-_Last updated: 2026-10-27 · Current milestone: M2 (next)_
+_Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Done (M0 + M1)
 
@@ -29,13 +29,11 @@ _Last updated: 2026-10-27 · Current milestone: M2 (next)_
 
 - Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
-
 - Late captures after expiry (`payment_captured_after_expiry` events) need an ops view/refund flow once Razorpay is live.
 - Gateway order creation runs inside the DB transaction (fine for mock; move after commit for Razorpay).
 - No rate limiting yet (newsletter, cart, orders) — M7.
 - Discounts/coupons not implemented; GST is one "included" figure (CGST/SGST split blocked by B3).
 - `ListProducts` returns `total=0` when the requested page is beyond the last page (window count).
-- Changes are **not committed**; review and commit when ready.
 
 ## Next steps (in order)
 

@@ -15,6 +15,8 @@ tags:
   - name: orders
   - name: payments
   - name: marketing
+  - name: admin
+    description: Staff-only. Requires the pv_admin session cookie (path /api/v1/admin, SameSite=Strict) except for sign-in.
 
 paths:
   /health:
@@ -356,7 +358,148 @@ paths:
         "202": { description: Subscribed (idempotent) }
         "422": { $ref: "#/components/responses/Problem" }
 
+  /admin/session:
+    post:
+      tags: [admin]
+      operationId: adminLogin
+      description: Signs in an admin. Accounts lock for 15 minutes after 5 consecutive failures.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminLoginRequest" }
+      responses:
+        "200":
+          description: Signed in; sets the pv_admin cookie
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUser" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [admin]
+      operationId: adminLogout
+      security: [{ adminSession: [] }]
+      responses:
+        "204": { description: Signed out }
+
+  /admin/me:
+    get:
+      tags: [admin]
+      operationId: adminMe
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: The signed-in admin
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUser" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /admin/me/password:
+    put:
+      tags: [admin]
+      operationId: adminChangePassword
+      description: Changes the signed-in admin's password and signs out their other sessions.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "204": { description: Password changed }
+        "401": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/users:
+    get:
+      tags: [admin]
+      operationId: adminListUsers
+      description: Owner only.
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: All admin accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminUser" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [admin]
+      operationId: adminCreateUser
+      description: Owner only.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateAdminRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUser" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/users/{id}:
+    patch:
+      tags: [admin]
+      operationId: adminUpdateUser
+      description: Owner only. Disabling an account or resetting its password signs it out everywhere. The last active owner cannot be demoted or disabled.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateAdminRequest" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUser" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/audit:
+    get:
+      tags: [admin]
+      operationId: adminListAudit
+      description: Owner only. Newest first, 50 per page.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Audit log page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+
 components:
+  securitySchemes:
+    adminSession:
+      type: apiKey
+      in: cookie
+      name: pv_admin
   parameters:
     Slug:
       name: slug
@@ -377,6 +520,87 @@ components:
           schema: { $ref: "#/components/schemas/Cart" }
 
   schemas:
+    AdminRole:
+      type: string
+      enum: [owner, catalog, orders, content]
+      description: owner = everything incl. users and settings; catalog / orders / content = their area only.
+
+    AdminUser:
+      type: object
+      required: [id, email, name, role, isActive, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/AdminRole" }
+        isActive: { type: boolean }
+        lastLoginAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    AdminLoginRequest:
+      type: object
+      required: [email, password]
+      additionalProperties: false
+      properties:
+        email: { type: string, maxLength: 254 }
+        password: { type: string, maxLength: 256 }
+
+    Password:
+      type: string
+      minLength: 12
+      maxLength: 256
+      description: At least 12 characters.
+
+    CreateAdminRequest:
+      type: object
+      required: [email, name, role, password]
+      additionalProperties: false
+      properties:
+        email: { $ref: "#/components/schemas/Email" }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        role: { $ref: "#/components/schemas/AdminRole" }
+        password: { $ref: "#/components/schemas/Password" }
+
+    UpdateAdminRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        role: { $ref: "#/components/schemas/AdminRole" }
+        isActive: { type: boolean }
+        password: { $ref: "#/components/schemas/Password" }
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      additionalProperties: false
+      properties:
+        currentPassword: { type: string, maxLength: 256 }
+        newPassword: { $ref: "#/components/schemas/Password" }
+
+    AuditEntry:
+      type: object
+      required: [id, action, entity, entityId, adminEmail, ip, createdAt, data]
+      properties:
+        id: { type: integer, format: int64 }
+        action: { type: string }
+        entity: { type: string }
+        entityId: { type: string }
+        adminEmail: { type: string }
+        ip: { type: string }
+        data: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+
+    AuditPage:
+      type: object
+      required: [items, page, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AuditEntry" }
+        page: { type: integer }
+        total: { type: integer }
+
     Paise:
       type: integer
       format: int64

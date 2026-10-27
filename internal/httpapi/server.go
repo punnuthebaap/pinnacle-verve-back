@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/pinnacleverve/api/internal/admin"
 	"github.com/pinnacleverve/api/internal/api"
 	"github.com/pinnacleverve/api/internal/cart"
 	"github.com/pinnacleverve/api/internal/catalog"
@@ -23,6 +24,7 @@ type Server struct {
 	Catalog *catalog.Service
 	Cart    *cart.Service
 	Orders  *order.Service
+	Admin   *admin.Service
 	Log     *slog.Logger
 }
 

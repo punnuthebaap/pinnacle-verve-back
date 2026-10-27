@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 
+	"github.com/pinnacleverve/api/internal/admin"
 	"github.com/pinnacleverve/api/internal/api"
 	"github.com/pinnacleverve/api/internal/cart"
 	"github.com/pinnacleverve/api/internal/catalog"
@@ -55,6 +56,7 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		Catalog: catalog.NewService(q),
 		Cart:    cart.NewService(pool, q, cfg),
 		Orders:  order.NewService(pool, q, cfg, provider, log),
+		Admin:   admin.NewService(q, log),
 		Log:     log,
 	}
 
@@ -79,6 +81,7 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		httpx.Harden(1<<20),
 		httpx.SameOrigin(cfg.AllowedOrigins),
 		session.Middleware(cfg.CookieSecure, cart.Persister(q)),
+		srv.Admin.Middleware(cfg.CookieSecure),
 		httpapi.CaptureWebhook,
 		validate,
 	)

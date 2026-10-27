@@ -17,6 +17,8 @@ internal/cart         session cart; pricing via pricing.Compute
 internal/order        cart → order, stock reservation, payment webhooks
 internal/payment      Provider interface; Mock (HMAC-signed webhooks); Razorpay later
 internal/pricing      pure totals/GST math (unit tested)
+internal/admin        staff accounts: argon2id passwords, lockout, sessions, RBAC (Can(role, area)), audit log
+cmd/admin             bootstrap the first owner (password from ADMIN_PASSWORD)
 internal/platform     config, database (pool, migrate, InTx), httpx (middleware, problems), session
 ```
 
@@ -24,7 +26,7 @@ Dependency direction: `httpapi → services (catalog|cart|order) → store`. Ser
 
 ## Request pipeline
 
-`Observe` (request id, log, recover) → `Harden` (headers, 1 MiB body cap) → `SameOrigin` (CSRF) → `session` → `CaptureWebhook` (raw body for signatures) → OpenAPI validator → generated router → handler.
+`Observe` (request id, log, recover) → `Harden` (headers, 1 MiB body cap) → `SameOrigin` (CSRF) → `session` → `admin` (staff auth for `/api/v1/admin/*`) → `CaptureWebhook` (raw body for signatures) → OpenAPI validator → generated router → handler.
 
 ## Data model (migration 00001)
 

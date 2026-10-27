@@ -16,6 +16,12 @@ go run ./cmd/seed               # migrate + load development fixtures (RESETS da
 go run ./cmd/server             # http://localhost:8080/api/v1/health
 ```
 
+Create the first admin owner (once; there are no default credentials):
+
+```bash
+ADMIN_PASSWORD='choose-12+-chars' go run ./cmd/admin create-owner -email you@example.com -name "Your Name"
+```
+
 Windows without Docker (uses installed PostgreSQL binaries; data in `.local/pgdata`, git-ignored):
 
 ```bash

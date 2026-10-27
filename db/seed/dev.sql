@@ -2,6 +2,9 @@
 -- Running the seed RESETS all catalogue, cart and order data.
 TRUNCATE categories, products, addons, sessions, orders, payment_events, newsletter_subscribers CASCADE;
 
+-- IDs are derived from slugs/SKUs (md5 → uuid) so re-seeding keeps them stable. Otherwise pages cached
+-- by the storefront would keep pointing at variant IDs that no longer exist.
+
 INSERT INTO categories (slug, name, eyebrow, description, position) VALUES
 ('mirrors', 'Architectural Mirrors & Sculptural Forms', 'Handcrafted Silhouettes & Archetypes',
  'Handcrafted pieces engineered with ultra-HD 5mm copper-free silvered glass, heirloom Indian hardwoods, and precision-forged champagne brass frames.', 1),
@@ -20,8 +23,8 @@ JOIN (VALUES
 ) AS f(cat, key, label, kind, position) ON f.cat = c.slug;
 
 -- products: slug, category, name, subtitle, material, size, badges, rating, count, shipping, rank
-INSERT INTO products (slug, category_id, name, subtitle, material_label, size_label, badges, rating_avg, rating_count, shipping_note, rank)
-SELECT p.slug, c.id, p.name, p.subtitle, p.material, p.size, p.badges::jsonb, p.rating, p.cnt, p.ship, p.rank
+INSERT INTO products (id, slug, category_id, name, subtitle, material_label, size_label, badges, rating_avg, rating_count, shipping_note, rank)
+SELECT md5('product:' || p.slug)::uuid, p.slug, c.id, p.name, p.subtitle, p.material, p.size, p.badges::jsonb, p.rating, p.cnt, p.ship, p.rank
 FROM (VALUES
   ('biomorphic-duet', 'mirrors', 'The Biomorphic Duet', 'Dual French Cleats • 5mm Ultra-HD Copper-Free', 'Hand-Forged Brass', '',
    '[{"label":"Best Seller","tone":"dark"},{"label":"Console Pair","tone":"light"}]', 4.9, 219, 'Incl. White-Glove Transit • 7-Day In-Home Trial', 1),
@@ -56,8 +59,8 @@ INSERT INTO product_images (product_id, url, alt, position)
 SELECT id, '/images/products/' || slug || '.jpg', name, 0 FROM products;
 
 -- Single-variant products: price, MRP, stock.
-INSERT INTO product_variants (product_id, sku, price_paise, mrp_paise, stock)
-SELECT p.id, v.sku, v.price * 100, v.mrp * 100, v.stock
+INSERT INTO product_variants (id, product_id, sku, price_paise, mrp_paise, stock)
+SELECT md5('variant:' || v.sku)::uuid, p.id, v.sku, v.price * 100, v.mrp * 100, v.stock
 FROM (VALUES
   ('biomorphic-duet', 'BIO-DUET-2', 18499, 22000, 12),
   ('pinnacle-arc-supreme', 'ARC-SUP-6528', 16999, 19999, 8),
@@ -100,8 +103,8 @@ UPDATE products SET
   ]'
 WHERE slug = 'contour-architectural-vanity-mirror';
 
-INSERT INTO product_variants (product_id, sku, options, price_paise, mrp_paise, stock, position)
-SELECT p.id,
+INSERT INTO product_variants (id, product_id, sku, options, price_paise, mrp_paise, stock, position)
+SELECT md5('variant:ARC-CNT-' || d.sku || '-' || f.sku || '-' || l.sku)::uuid, p.id,
        'ARC-CNT-' || d.sku || '-' || f.sku || '-' || l.sku,
        jsonb_build_object('dimension', d.code, 'finish', f.code, 'luminescence', l.code),
        d.price * 100, d.mrp * 100, 5,

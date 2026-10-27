@@ -29,6 +29,10 @@ type Config struct {
 	// Unpaid orders are cancelled and their stock released after this long.
 	PendingOrderTTL time.Duration
 	SweepInterval   time.Duration
+
+	// Storefront cache revalidation after admin catalogue changes (decision D36).
+	StorefrontRevalidateURL string
+	RevalidateSecret        string
 }
 
 func (c Config) IsProduction() bool { return c.Env == "production" }
@@ -49,6 +53,8 @@ func Load() (Config, error) {
 		EnabledPaymentMethods:    getList("ENABLED_PAYMENT_METHODS", "upi,card,netbanking,emi"),
 		PendingOrderTTL:          time.Duration(getInt("PENDING_ORDER_TTL_MINUTES", 30)) * time.Minute,
 		SweepInterval:            time.Minute,
+		StorefrontRevalidateURL:  get("STOREFRONT_REVALIDATE_URL", "http://localhost:3000/internal/revalidate"),
+		RevalidateSecret:         get("REVALIDATE_SECRET", "dev-revalidate-secret"),
 	}
 	if c.IsProduction() {
 		if c.PaymentProvider == "mock" {
@@ -56,6 +62,9 @@ func Load() (Config, error) {
 		}
 		if !c.CookieSecure {
 			return c, fmt.Errorf("COOKIE_SECURE must be true in production")
+		}
+		if c.RevalidateSecret == "dev-revalidate-secret" || len(c.RevalidateSecret) < 24 {
+			return c, fmt.Errorf("REVALIDATE_SECRET must be set to a strong value in production")
 		}
 	}
 	return c, nil

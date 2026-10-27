@@ -17,6 +17,7 @@ internal/cart         session cart; pricing via pricing.Compute
 internal/order        cart → order, stock reservation, payment webhooks
 internal/payment      Provider interface; Mock (HMAC-signed webhooks); Razorpay later
 internal/pricing      pure totals/GST math (unit tested)
+internal/catalogadmin admin catalogue writes: validation, audit-in-transaction, storefront revalidation (HTTPRevalidator)
 internal/admin        staff accounts: argon2id passwords, lockout, sessions, RBAC (Can(role, area)), audit log
 cmd/admin             bootstrap the first owner (password from ADMIN_PASSWORD)
 internal/platform     config, database (pool, migrate, InTx), httpx (middleware, problems), session

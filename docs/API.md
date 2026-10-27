@@ -32,6 +32,8 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
 - Passwords: argon2id; ≥ 12 characters. 5 consecutive failures lock the account for 15 minutes (`429 account_locked`); unknown emails get the same `401 invalid_credentials` as wrong passwords.
 - Roles: `owner` (everything incl. users, settings, audit), `catalog`, `orders`, `content` (own area only) → `403 forbidden` otherwise. The last active owner can't be demoted or disabled (`409 last_owner`).
 - Every sign-in attempt and change is written to the audit log (`GET /admin/audit`, owner only).
+- **Catalogue** (`catalog` role): `/admin/categories` (+ `/facets`), `/admin/products` (search by name/slug/SKU, includes inactive), `/admin/products/{id}` and its `/variants`, `/attributes`, `/related`. Collection endpoints are full replacements (`PUT`); every response returns the whole product. Variants and products are deactivated, never deleted (orders reference them). Business-rule failures are `422 invalid` with a message meant for the admin; `409 slug_taken` / `sku_taken`.
+- After every successful catalogue write the API calls `STOREFRONT_REVALIDATE_URL` (header `X-Revalidate-Secret`) so cached storefront pages refresh immediately.
 
 ## Payment flow (M1: mock provider)
 

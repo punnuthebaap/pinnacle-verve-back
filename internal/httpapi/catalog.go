@@ -168,14 +168,14 @@ func (s *Server) GetProduct(ctx context.Context, r api.GetProductRequestObject) 
 		Id: p.ID, Slug: p.Slug, Name: p.Name, Subtitle: nonEmpty(p.Subtitle), Series: nonEmpty(p.Series),
 		MaterialLabel: nonEmpty(p.MaterialLabel), SizeLabel: nonEmpty(p.SizeLabel), Description: p.Description,
 		ShippingNote: nonEmpty(p.ShippingNote), Badges: badges(p.Badges),
-		Category:   api.CategoryRef{Slug: p.CategorySlug, Name: p.CategoryName},
-		Image:      images[0], Images: images, Variants: variants,
+		Category: api.CategoryRef{Slug: p.CategorySlug, Name: p.CategoryName},
+		Image:    images[0], Images: images, Variants: variants,
 		PricePaise: def.PricePaise, MrpPaise: def.MrpPaise, DefaultVariantId: def.ID,
-		RatingAvg:  p.RatingAvg, RatingCount: int(p.RatingCount),
-		InStock:    total > 0, LowStock: lowStock(total),
+		RatingAvg: p.RatingAvg, RatingCount: int(p.RatingCount),
+		InStock: total > 0, LowStock: lowStock(total),
 		GstRatePercent: float64(p.GstRateBps) / 100,
-		Options:    []api.ProductOption{}, Features: []api.ProductFeature{},
-		Specs:      []api.SpecSection{}, Care: []api.CareNote{}, Facts: []api.ProductFact{},
+		Options:        []api.ProductOption{}, Features: []api.ProductFeature{},
+		Specs: []api.SpecSection{}, Care: []api.CareNote{}, Facts: []api.ProductFact{},
 	}
 	_ = json.Unmarshal(p.Options, &out.Options)
 	_ = json.Unmarshal(p.Features, &out.Features)

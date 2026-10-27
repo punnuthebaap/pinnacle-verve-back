@@ -90,6 +90,27 @@ func (e FacetKind) Valid() bool {
 	}
 }
 
+// Defines values for FacetDefinitionKind.
+const (
+	FacetDefinitionKindMulti  FacetDefinitionKind = "multi"
+	FacetDefinitionKindSingle FacetDefinitionKind = "single"
+	FacetDefinitionKindSwatch FacetDefinitionKind = "swatch"
+)
+
+// Valid indicates whether the value is a known member of the FacetDefinitionKind enum.
+func (e FacetDefinitionKind) Valid() bool {
+	switch e {
+	case FacetDefinitionKindMulti:
+		return true
+	case FacetDefinitionKindSingle:
+		return true
+	case FacetDefinitionKindSwatch:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	Ok HealthStatus = "ok"
@@ -350,10 +371,135 @@ type Address struct {
 	State   string `json:"state"`
 }
 
+// AdminAttribute defines model for AdminAttribute.
+type AdminAttribute struct {
+	Key       string  `json:"key"`
+	Label     string  `json:"label"`
+	SwatchHex *string `json:"swatchHex,omitempty"`
+	Value     string  `json:"value"`
+}
+
+// AdminCategory defines model for AdminCategory.
+type AdminCategory struct {
+	Description  string             `json:"description"`
+	Eyebrow      string             `json:"eyebrow"`
+	Facets       []FacetDefinition  `json:"facets"`
+	Id           openapi_types.UUID `json:"id"`
+	IsActive     bool               `json:"isActive"`
+	Name         string             `json:"name"`
+	Position     int                `json:"position"`
+	ProductCount int                `json:"productCount"`
+	Slug         UrlSlug            `json:"slug"`
+}
+
+// AdminCategoryInput defines model for AdminCategoryInput.
+type AdminCategoryInput struct {
+	Description string  `json:"description"`
+	Eyebrow     string  `json:"eyebrow"`
+	IsActive    bool    `json:"isActive"`
+	Name        string  `json:"name"`
+	Position    int     `json:"position"`
+	Slug        UrlSlug `json:"slug"`
+}
+
+// AdminImage defines model for AdminImage.
+type AdminImage struct {
+	Alt      string             `json:"alt"`
+	Id       openapi_types.UUID `json:"id"`
+	Position int                `json:"position"`
+	Url      string             `json:"url"`
+}
+
 // AdminLoginRequest defines model for AdminLoginRequest.
 type AdminLoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+// AdminProduct defines model for AdminProduct.
+type AdminProduct struct {
+	Attributes  []AdminAttribute   `json:"attributes"`
+	Badges      []Badge            `json:"badges"`
+	Care        []CareNote         `json:"care"`
+	CategoryId  openapi_types.UUID `json:"categoryId"`
+	Description string             `json:"description"`
+	Facts       []ProductFact      `json:"facts"`
+	Features    []ProductFeature   `json:"features"`
+
+	// GstRateBps GST rate in basis points (1800 = 18%).
+	GstRateBps    int                `json:"gstRateBps"`
+	Id            openapi_types.UUID `json:"id"`
+	Images        []AdminImage       `json:"images"`
+	IsActive      bool               `json:"isActive"`
+	MaterialLabel string             `json:"materialLabel"`
+	Name          string             `json:"name"`
+	Options       []ProductOption    `json:"options"`
+
+	// Rank Featured sort order (lower first).
+	Rank        int     `json:"rank"`
+	RatingAvg   float64 `json:"ratingAvg"`
+	RatingCount int     `json:"ratingCount"`
+	Related     []struct {
+		Id   openapi_types.UUID `json:"id"`
+		Name string             `json:"name"`
+		Slug string             `json:"slug"`
+	} `json:"related"`
+	Series       string         `json:"series"`
+	ShippingNote string         `json:"shippingNote"`
+	SizeLabel    string         `json:"sizeLabel"`
+	Slug         UrlSlug        `json:"slug"`
+	Specs        []SpecSection  `json:"specs"`
+	Subtitle     string         `json:"subtitle"`
+	Variants     []AdminVariant `json:"variants"`
+}
+
+// AdminProductInput defines model for AdminProductInput.
+type AdminProductInput struct {
+	Badges      []Badge            `json:"badges"`
+	Care        []CareNote         `json:"care"`
+	CategoryId  openapi_types.UUID `json:"categoryId"`
+	Description string             `json:"description"`
+	Facts       []ProductFact      `json:"facts"`
+	Features    []ProductFeature   `json:"features"`
+
+	// GstRateBps GST rate in basis points (1800 = 18%).
+	GstRateBps    int             `json:"gstRateBps"`
+	IsActive      bool            `json:"isActive"`
+	MaterialLabel string          `json:"materialLabel"`
+	Name          string          `json:"name"`
+	Options       []ProductOption `json:"options"`
+
+	// Rank Featured sort order (lower first).
+	Rank         int           `json:"rank"`
+	Series       string        `json:"series"`
+	ShippingNote string        `json:"shippingNote"`
+	SizeLabel    string        `json:"sizeLabel"`
+	Slug         UrlSlug       `json:"slug"`
+	Specs        []SpecSection `json:"specs"`
+	Subtitle     string        `json:"subtitle"`
+}
+
+// AdminProductPage defines model for AdminProductPage.
+type AdminProductPage struct {
+	Items []AdminProductSummary `json:"items"`
+	Page  int                   `json:"page"`
+	Total int                   `json:"total"`
+}
+
+// AdminProductSummary defines model for AdminProductSummary.
+type AdminProductSummary struct {
+	CategoryId   openapi_types.UUID `json:"categoryId"`
+	CategoryName string             `json:"categoryName"`
+	Id           openapi_types.UUID `json:"id"`
+	ImageUrl     string             `json:"imageUrl"`
+	IsActive     bool               `json:"isActive"`
+
+	// MinPricePaise Amount in paise (₹1 = 100).
+	MinPricePaise Paise  `json:"minPricePaise"`
+	Name          string `json:"name"`
+	Slug          string `json:"slug"`
+	TotalStock    int    `json:"totalStock"`
+	VariantCount  int    `json:"variantCount"`
 }
 
 // AdminRole owner = everything incl. users and settings; catalog / orders / content = their area only.
@@ -370,6 +516,34 @@ type AdminUser struct {
 
 	// Role owner = everything incl. users and settings; catalog / orders / content = their area only.
 	Role AdminRole `json:"role"`
+}
+
+// AdminVariant defines model for AdminVariant.
+type AdminVariant struct {
+	Id       openapi_types.UUID `json:"id"`
+	IsActive bool               `json:"isActive"`
+
+	// MrpPaise Amount in paise (₹1 = 100).
+	MrpPaise Paise             `json:"mrpPaise"`
+	Options  map[string]string `json:"options"`
+	Position int               `json:"position"`
+
+	// PricePaise Amount in paise (₹1 = 100).
+	PricePaise Paise  `json:"pricePaise"`
+	Sku        string `json:"sku"`
+	Stock      int    `json:"stock"`
+}
+
+// AdminVariantInput defines model for AdminVariantInput.
+type AdminVariantInput struct {
+	// Id Omit to create a new variant.
+	Id         *openapi_types.UUID `json:"id,omitempty"`
+	IsActive   bool                `json:"isActive"`
+	MrpPaise   int64               `json:"mrpPaise"`
+	Options    map[string]string   `json:"options"`
+	PricePaise int64               `json:"pricePaise"`
+	Sku        string              `json:"sku"`
+	Stock      int                 `json:"stock"`
 }
 
 // AuditEntry defines model for AuditEntry.
@@ -509,6 +683,16 @@ type Facet struct {
 
 // FacetKind defines model for Facet.Kind.
 type FacetKind string
+
+// FacetDefinition defines model for FacetDefinition.
+type FacetDefinition struct {
+	Key   string              `json:"key"`
+	Kind  FacetDefinitionKind `json:"kind"`
+	Label string              `json:"label"`
+}
+
+// FacetDefinitionKind defines model for FacetDefinition.Kind.
+type FacetDefinitionKind string
 
 // FacetValue defines model for FacetValue.
 type FacetValue struct {
@@ -815,6 +999,9 @@ type UpdateCartItemRequest struct {
 	Quantity int `json:"quantity"`
 }
 
+// UrlSlug defines model for UrlSlug.
+type UrlSlug = string
+
 // Variant defines model for Variant.
 type Variant struct {
 	Id       openapi_types.UUID `json:"id"`
@@ -847,6 +1034,34 @@ type Slug = string
 // AdminListAuditParams defines parameters for AdminListAudit.
 type AdminListAuditParams struct {
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// AdminSetCategoryFacetsJSONBody defines parameters for AdminSetCategoryFacets.
+type AdminSetCategoryFacetsJSONBody struct {
+	Facets []FacetDefinition `json:"facets"`
+}
+
+// AdminListProductsParams defines parameters for AdminListProducts.
+type AdminListProductsParams struct {
+	Q          *string             `form:"q,omitempty" json:"q,omitempty"`
+	CategoryId *openapi_types.UUID `form:"categoryId,omitempty" json:"categoryId,omitempty"`
+	Active     *bool               `form:"active,omitempty" json:"active,omitempty"`
+	Page       *int                `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// AdminSetAttributesJSONBody defines parameters for AdminSetAttributes.
+type AdminSetAttributesJSONBody struct {
+	Attributes []AdminAttribute `json:"attributes"`
+}
+
+// AdminSetRelatedJSONBody defines parameters for AdminSetRelated.
+type AdminSetRelatedJSONBody struct {
+	ProductIds []openapi_types.UUID `json:"productIds"`
+}
+
+// AdminSetVariantsJSONBody defines parameters for AdminSetVariants.
+type AdminSetVariantsJSONBody struct {
+	Variants []AdminVariantInput `json:"variants"`
 }
 
 // SetCartNotesJSONBody defines parameters for SetCartNotes.
@@ -901,8 +1116,32 @@ type ListProductReviewsParams struct {
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
 
+// AdminCreateCategoryJSONRequestBody defines body for AdminCreateCategory for application/json ContentType.
+type AdminCreateCategoryJSONRequestBody = AdminCategoryInput
+
+// AdminUpdateCategoryJSONRequestBody defines body for AdminUpdateCategory for application/json ContentType.
+type AdminUpdateCategoryJSONRequestBody = AdminCategoryInput
+
+// AdminSetCategoryFacetsJSONRequestBody defines body for AdminSetCategoryFacets for application/json ContentType.
+type AdminSetCategoryFacetsJSONRequestBody AdminSetCategoryFacetsJSONBody
+
 // AdminChangePasswordJSONRequestBody defines body for AdminChangePassword for application/json ContentType.
 type AdminChangePasswordJSONRequestBody = ChangePasswordRequest
+
+// AdminCreateProductJSONRequestBody defines body for AdminCreateProduct for application/json ContentType.
+type AdminCreateProductJSONRequestBody = AdminProductInput
+
+// AdminUpdateProductJSONRequestBody defines body for AdminUpdateProduct for application/json ContentType.
+type AdminUpdateProductJSONRequestBody = AdminProductInput
+
+// AdminSetAttributesJSONRequestBody defines body for AdminSetAttributes for application/json ContentType.
+type AdminSetAttributesJSONRequestBody AdminSetAttributesJSONBody
+
+// AdminSetRelatedJSONRequestBody defines body for AdminSetRelated for application/json ContentType.
+type AdminSetRelatedJSONRequestBody AdminSetRelatedJSONBody
+
+// AdminSetVariantsJSONRequestBody defines body for AdminSetVariants for application/json ContentType.
+type AdminSetVariantsJSONRequestBody AdminSetVariantsJSONBody
 
 // AdminLoginJSONRequestBody defines body for AdminLogin for application/json ContentType.
 type AdminLoginJSONRequestBody = AdminLoginRequest
@@ -946,11 +1185,44 @@ type ServerInterface interface {
 	// (GET /admin/audit)
 	AdminListAudit(w http.ResponseWriter, r *http.Request, params AdminListAuditParams)
 
+	// (GET /admin/categories)
+	AdminListCategories(w http.ResponseWriter, r *http.Request)
+
+	// (POST /admin/categories)
+	AdminCreateCategory(w http.ResponseWriter, r *http.Request)
+
+	// (PUT /admin/categories/{id})
+	AdminUpdateCategory(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
+	// (PUT /admin/categories/{id}/facets)
+	AdminSetCategoryFacets(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
 	// (GET /admin/me)
 	AdminMe(w http.ResponseWriter, r *http.Request)
 
 	// (PUT /admin/me/password)
 	AdminChangePassword(w http.ResponseWriter, r *http.Request)
+
+	// (GET /admin/products)
+	AdminListProducts(w http.ResponseWriter, r *http.Request, params AdminListProductsParams)
+
+	// (POST /admin/products)
+	AdminCreateProduct(w http.ResponseWriter, r *http.Request)
+
+	// (GET /admin/products/{id})
+	AdminGetProduct(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
+	// (PUT /admin/products/{id})
+	AdminUpdateProduct(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
+	// (PUT /admin/products/{id}/attributes)
+	AdminSetAttributes(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
+	// (PUT /admin/products/{id}/related)
+	AdminSetRelated(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+
+	// (PUT /admin/products/{id}/variants)
+	AdminSetVariants(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 
 	// (DELETE /admin/session)
 	AdminLogout(w http.ResponseWriter, r *http.Request)
@@ -1078,6 +1350,86 @@ func (siw *ServerInterfaceWrapper) AdminListAudit(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// AdminListCategories operation middleware
+func (siw *ServerInterfaceWrapper) AdminListCategories(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminListCategories(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminCreateCategory operation middleware
+func (siw *ServerInterfaceWrapper) AdminCreateCategory(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminCreateCategory(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUpdateCategory operation middleware
+func (siw *ServerInterfaceWrapper) AdminUpdateCategory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUpdateCategory(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetCategoryFacets operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetCategoryFacets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetCategoryFacets(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AdminMe operation middleware
 func (siw *ServerInterfaceWrapper) AdminMe(w http.ResponseWriter, r *http.Request) {
 
@@ -1097,6 +1449,222 @@ func (siw *ServerInterfaceWrapper) AdminChangePassword(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminChangePassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminListProducts operation middleware
+func (siw *ServerInterfaceWrapper) AdminListProducts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AdminListProductsParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "categoryId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "categoryId", r.URL.Query(), &params.CategoryId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "categoryId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "categoryId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "active" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "active", r.URL.Query(), &params.Active, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "active"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "active", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminListProducts(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminCreateProduct operation middleware
+func (siw *ServerInterfaceWrapper) AdminCreateProduct(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminCreateProduct(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminGetProduct operation middleware
+func (siw *ServerInterfaceWrapper) AdminGetProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminGetProduct(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminUpdateProduct operation middleware
+func (siw *ServerInterfaceWrapper) AdminUpdateProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminUpdateProduct(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetAttributes operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetAttributes(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetAttributes(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetRelated operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetRelated(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetRelated(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetVariants operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetVariants(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetVariants(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1865,9 +2433,22 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/users", wrapper.AdminCreateUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/admin/users/{id}", wrapper.AdminUpdateUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/audit", wrapper.AdminListAudit)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/categories", wrapper.AdminListCategories)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/categories", wrapper.AdminCreateCategory)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/categories/{id}", wrapper.AdminUpdateCategory)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/categories/{id}/facets", wrapper.AdminSetCategoryFacets)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/products", wrapper.AdminListProducts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/products", wrapper.AdminCreateProduct)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/products/{id}", wrapper.AdminGetProduct)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/products/{id}", wrapper.AdminUpdateProduct)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/products/{id}/variants", wrapper.AdminSetVariants)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/products/{id}/attributes", wrapper.AdminSetAttributes)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/products/{id}/related", wrapper.AdminSetRelated)
 
 	return m
 }
+
+type AdminProductJSONResponse AdminProduct
 
 type CartJSONResponse Cart
 
@@ -1930,6 +2511,231 @@ func (response AdminListAudit403ApplicationProblemPlusJSONResponse) VisitAdminLi
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListCategoriesRequestObject struct {
+}
+
+type AdminListCategoriesResponseObject interface {
+	VisitAdminListCategoriesResponse(w http.ResponseWriter) error
+}
+
+type AdminListCategories200JSONResponse struct {
+	Items []AdminCategory `json:"items"`
+}
+
+func (response AdminListCategories200JSONResponse) VisitAdminListCategoriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListCategories403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminListCategories403ApplicationProblemPlusJSONResponse) VisitAdminListCategoriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateCategoryRequestObject struct {
+	Body *AdminCreateCategoryJSONRequestBody
+}
+
+type AdminCreateCategoryResponseObject interface {
+	VisitAdminCreateCategoryResponse(w http.ResponseWriter) error
+}
+
+type AdminCreateCategory201JSONResponse AdminCategory
+
+func (response AdminCreateCategory201JSONResponse) VisitAdminCreateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateCategory403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminCreateCategory403ApplicationProblemPlusJSONResponse) VisitAdminCreateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateCategory409ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminCreateCategory409ApplicationProblemPlusJSONResponse) VisitAdminCreateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateCategoryRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminUpdateCategoryJSONRequestBody
+}
+
+type AdminUpdateCategoryResponseObject interface {
+	VisitAdminUpdateCategoryResponse(w http.ResponseWriter) error
+}
+
+type AdminUpdateCategory200JSONResponse AdminCategory
+
+func (response AdminUpdateCategory200JSONResponse) VisitAdminUpdateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateCategory403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminUpdateCategory403ApplicationProblemPlusJSONResponse) VisitAdminUpdateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateCategory404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminUpdateCategory404ApplicationProblemPlusJSONResponse) VisitAdminUpdateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateCategory409ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminUpdateCategory409ApplicationProblemPlusJSONResponse) VisitAdminUpdateCategoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetCategoryFacetsRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminSetCategoryFacetsJSONRequestBody
+}
+
+type AdminSetCategoryFacetsResponseObject interface {
+	VisitAdminSetCategoryFacetsResponse(w http.ResponseWriter) error
+}
+
+type AdminSetCategoryFacets200JSONResponse AdminCategory
+
+func (response AdminSetCategoryFacets200JSONResponse) VisitAdminSetCategoryFacetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetCategoryFacets403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminSetCategoryFacets403ApplicationProblemPlusJSONResponse) VisitAdminSetCategoryFacetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetCategoryFacets404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetCategoryFacets404ApplicationProblemPlusJSONResponse) VisitAdminSetCategoryFacetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetCategoryFacets422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetCategoryFacets422ApplicationProblemPlusJSONResponse) VisitAdminSetCategoryFacetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2006,6 +2812,458 @@ func (response AdminChangePassword401ApplicationProblemPlusJSONResponse) VisitAd
 type AdminChangePassword422ApplicationProblemPlusJSONResponse Problem
 
 func (response AdminChangePassword422ApplicationProblemPlusJSONResponse) VisitAdminChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListProductsRequestObject struct {
+	Params AdminListProductsParams
+}
+
+type AdminListProductsResponseObject interface {
+	VisitAdminListProductsResponse(w http.ResponseWriter) error
+}
+
+type AdminListProducts200JSONResponse AdminProductPage
+
+func (response AdminListProducts200JSONResponse) VisitAdminListProductsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListProducts403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminListProducts403ApplicationProblemPlusJSONResponse) VisitAdminListProductsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateProductRequestObject struct {
+	Body *AdminCreateProductJSONRequestBody
+}
+
+type AdminCreateProductResponseObject interface {
+	VisitAdminCreateProductResponse(w http.ResponseWriter) error
+}
+
+type AdminCreateProduct201JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminCreateProduct201JSONResponse) VisitAdminCreateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateProduct403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminCreateProduct403ApplicationProblemPlusJSONResponse) VisitAdminCreateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateProduct409ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminCreateProduct409ApplicationProblemPlusJSONResponse) VisitAdminCreateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCreateProduct422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminCreateProduct422ApplicationProblemPlusJSONResponse) VisitAdminCreateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetProductRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type AdminGetProductResponseObject interface {
+	VisitAdminGetProductResponse(w http.ResponseWriter) error
+}
+
+type AdminGetProduct200JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminGetProduct200JSONResponse) VisitAdminGetProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetProduct403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminGetProduct403ApplicationProblemPlusJSONResponse) VisitAdminGetProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetProduct404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminGetProduct404ApplicationProblemPlusJSONResponse) VisitAdminGetProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateProductRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminUpdateProductJSONRequestBody
+}
+
+type AdminUpdateProductResponseObject interface {
+	VisitAdminUpdateProductResponse(w http.ResponseWriter) error
+}
+
+type AdminUpdateProduct200JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminUpdateProduct200JSONResponse) VisitAdminUpdateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateProduct403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminUpdateProduct403ApplicationProblemPlusJSONResponse) VisitAdminUpdateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateProduct404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminUpdateProduct404ApplicationProblemPlusJSONResponse) VisitAdminUpdateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateProduct409ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminUpdateProduct409ApplicationProblemPlusJSONResponse) VisitAdminUpdateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminUpdateProduct422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminUpdateProduct422ApplicationProblemPlusJSONResponse) VisitAdminUpdateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetAttributesRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminSetAttributesJSONRequestBody
+}
+
+type AdminSetAttributesResponseObject interface {
+	VisitAdminSetAttributesResponse(w http.ResponseWriter) error
+}
+
+type AdminSetAttributes200JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminSetAttributes200JSONResponse) VisitAdminSetAttributesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetAttributes403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminSetAttributes403ApplicationProblemPlusJSONResponse) VisitAdminSetAttributesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetAttributes404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetAttributes404ApplicationProblemPlusJSONResponse) VisitAdminSetAttributesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetAttributes422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetAttributes422ApplicationProblemPlusJSONResponse) VisitAdminSetAttributesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetRelatedRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminSetRelatedJSONRequestBody
+}
+
+type AdminSetRelatedResponseObject interface {
+	VisitAdminSetRelatedResponse(w http.ResponseWriter) error
+}
+
+type AdminSetRelated200JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminSetRelated200JSONResponse) VisitAdminSetRelatedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetRelated403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminSetRelated403ApplicationProblemPlusJSONResponse) VisitAdminSetRelatedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetRelated404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetRelated404ApplicationProblemPlusJSONResponse) VisitAdminSetRelatedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetRelated422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetRelated422ApplicationProblemPlusJSONResponse) VisitAdminSetRelatedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetVariantsRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AdminSetVariantsJSONRequestBody
+}
+
+type AdminSetVariantsResponseObject interface {
+	VisitAdminSetVariantsResponse(w http.ResponseWriter) error
+}
+
+type AdminSetVariants200JSONResponse struct{ AdminProductJSONResponse }
+
+func (response AdminSetVariants200JSONResponse) VisitAdminSetVariantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetVariants403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminSetVariants403ApplicationProblemPlusJSONResponse) VisitAdminSetVariantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetVariants404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetVariants404ApplicationProblemPlusJSONResponse) VisitAdminSetVariantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetVariants409ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetVariants409ApplicationProblemPlusJSONResponse) VisitAdminSetVariantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetVariants422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetVariants422ApplicationProblemPlusJSONResponse) VisitAdminSetVariantsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2931,11 +4189,44 @@ type StrictServerInterface interface {
 	// (GET /admin/audit)
 	AdminListAudit(ctx context.Context, request AdminListAuditRequestObject) (AdminListAuditResponseObject, error)
 
+	// (GET /admin/categories)
+	AdminListCategories(ctx context.Context, request AdminListCategoriesRequestObject) (AdminListCategoriesResponseObject, error)
+
+	// (POST /admin/categories)
+	AdminCreateCategory(ctx context.Context, request AdminCreateCategoryRequestObject) (AdminCreateCategoryResponseObject, error)
+
+	// (PUT /admin/categories/{id})
+	AdminUpdateCategory(ctx context.Context, request AdminUpdateCategoryRequestObject) (AdminUpdateCategoryResponseObject, error)
+
+	// (PUT /admin/categories/{id}/facets)
+	AdminSetCategoryFacets(ctx context.Context, request AdminSetCategoryFacetsRequestObject) (AdminSetCategoryFacetsResponseObject, error)
+
 	// (GET /admin/me)
 	AdminMe(ctx context.Context, request AdminMeRequestObject) (AdminMeResponseObject, error)
 
 	// (PUT /admin/me/password)
 	AdminChangePassword(ctx context.Context, request AdminChangePasswordRequestObject) (AdminChangePasswordResponseObject, error)
+
+	// (GET /admin/products)
+	AdminListProducts(ctx context.Context, request AdminListProductsRequestObject) (AdminListProductsResponseObject, error)
+
+	// (POST /admin/products)
+	AdminCreateProduct(ctx context.Context, request AdminCreateProductRequestObject) (AdminCreateProductResponseObject, error)
+
+	// (GET /admin/products/{id})
+	AdminGetProduct(ctx context.Context, request AdminGetProductRequestObject) (AdminGetProductResponseObject, error)
+
+	// (PUT /admin/products/{id})
+	AdminUpdateProduct(ctx context.Context, request AdminUpdateProductRequestObject) (AdminUpdateProductResponseObject, error)
+
+	// (PUT /admin/products/{id}/attributes)
+	AdminSetAttributes(ctx context.Context, request AdminSetAttributesRequestObject) (AdminSetAttributesResponseObject, error)
+
+	// (PUT /admin/products/{id}/related)
+	AdminSetRelated(ctx context.Context, request AdminSetRelatedRequestObject) (AdminSetRelatedResponseObject, error)
+
+	// (PUT /admin/products/{id}/variants)
+	AdminSetVariants(ctx context.Context, request AdminSetVariantsRequestObject) (AdminSetVariantsResponseObject, error)
 
 	// (DELETE /admin/session)
 	AdminLogout(ctx context.Context, request AdminLogoutRequestObject) (AdminLogoutResponseObject, error)
@@ -3096,6 +4387,127 @@ func (sh *strictHandler) AdminListAudit(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// AdminListCategories operation middleware
+func (sh *strictHandler) AdminListCategories(w http.ResponseWriter, r *http.Request) {
+	var request AdminListCategoriesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminListCategories(ctx, request.(AdminListCategoriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminListCategories")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminListCategoriesResponseObject); ok {
+		if err := validResponse.VisitAdminListCategoriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminCreateCategory operation middleware
+func (sh *strictHandler) AdminCreateCategory(w http.ResponseWriter, r *http.Request) {
+	var request AdminCreateCategoryRequestObject
+
+	var body AdminCreateCategoryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminCreateCategory(ctx, request.(AdminCreateCategoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminCreateCategory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminCreateCategoryResponseObject); ok {
+		if err := validResponse.VisitAdminCreateCategoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUpdateCategory operation middleware
+func (sh *strictHandler) AdminUpdateCategory(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminUpdateCategoryRequestObject
+
+	request.Id = id
+
+	var body AdminUpdateCategoryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUpdateCategory(ctx, request.(AdminUpdateCategoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUpdateCategory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUpdateCategoryResponseObject); ok {
+		if err := validResponse.VisitAdminUpdateCategoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetCategoryFacets operation middleware
+func (sh *strictHandler) AdminSetCategoryFacets(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminSetCategoryFacetsRequestObject
+
+	request.Id = id
+
+	var body AdminSetCategoryFacetsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetCategoryFacets(ctx, request.(AdminSetCategoryFacetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetCategoryFacets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetCategoryFacetsResponseObject); ok {
+		if err := validResponse.VisitAdminSetCategoryFacetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // AdminMe operation middleware
 func (sh *strictHandler) AdminMe(w http.ResponseWriter, r *http.Request) {
 	var request AdminMeRequestObject
@@ -3144,6 +4556,221 @@ func (sh *strictHandler) AdminChangePassword(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminChangePasswordResponseObject); ok {
 		if err := validResponse.VisitAdminChangePasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminListProducts operation middleware
+func (sh *strictHandler) AdminListProducts(w http.ResponseWriter, r *http.Request, params AdminListProductsParams) {
+	var request AdminListProductsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminListProducts(ctx, request.(AdminListProductsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminListProducts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminListProductsResponseObject); ok {
+		if err := validResponse.VisitAdminListProductsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminCreateProduct operation middleware
+func (sh *strictHandler) AdminCreateProduct(w http.ResponseWriter, r *http.Request) {
+	var request AdminCreateProductRequestObject
+
+	var body AdminCreateProductJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminCreateProduct(ctx, request.(AdminCreateProductRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminCreateProduct")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminCreateProductResponseObject); ok {
+		if err := validResponse.VisitAdminCreateProductResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminGetProduct operation middleware
+func (sh *strictHandler) AdminGetProduct(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminGetProductRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminGetProduct(ctx, request.(AdminGetProductRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminGetProduct")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminGetProductResponseObject); ok {
+		if err := validResponse.VisitAdminGetProductResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminUpdateProduct operation middleware
+func (sh *strictHandler) AdminUpdateProduct(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminUpdateProductRequestObject
+
+	request.Id = id
+
+	var body AdminUpdateProductJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminUpdateProduct(ctx, request.(AdminUpdateProductRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminUpdateProduct")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminUpdateProductResponseObject); ok {
+		if err := validResponse.VisitAdminUpdateProductResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetAttributes operation middleware
+func (sh *strictHandler) AdminSetAttributes(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminSetAttributesRequestObject
+
+	request.Id = id
+
+	var body AdminSetAttributesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetAttributes(ctx, request.(AdminSetAttributesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetAttributes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetAttributesResponseObject); ok {
+		if err := validResponse.VisitAdminSetAttributesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetRelated operation middleware
+func (sh *strictHandler) AdminSetRelated(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminSetRelatedRequestObject
+
+	request.Id = id
+
+	var body AdminSetRelatedJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetRelated(ctx, request.(AdminSetRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetRelatedResponseObject); ok {
+		if err := validResponse.VisitAdminSetRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetVariants operation middleware
+func (sh *strictHandler) AdminSetVariants(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AdminSetVariantsRequestObject
+
+	request.Id = id
+
+	var body AdminSetVariantsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetVariants(ctx, request.(AdminSetVariantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetVariants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetVariantsResponseObject); ok {
+		if err := validResponse.VisitAdminSetVariantsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3810,95 +5437,119 @@ func (sh *strictHandler) ListProductReviews(w http.ResponseWriter, r *http.Reque
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"7H3dchvHcvCrTO3xV6Y+AyRIU4pEleoULdk6LMsyQ0g6lSMx0mC3Aczh7sx6ZhYQzGJVKhd5gNzkPm+R",
+	"67yJnyQ1P7vYnxlgFyBI2cmVBO7u/HT39H/3XAchS1JGgUoRnFwHKeY4AQlc/xrG2UT9S2hwEqRYToNe",
+	"QHECwUkg1KNewOGXjHCIghPJM+gFIpxCgs1IUgJXH/7ze9z/ddB/0r+8Puw9Htx8FfQCuUj1KJITOglu",
+	"bm7UUCJlVICe+TRKCD3nLMpCqX6HjEqg+r84TWMSYkkYPfi7YFT9bTntVxzGwUnwp4Plvg7MU3FQGVTP",
+	"GYEIOUnVWMFJ8GYKKDWP0ZzIKZphTjCVoofGJJbA0QzHGYgeSjFRCxcI0wiRBE9ABDe94Dnmt7daPZhj",
+	"lc8zzoFKJEAIwigK9Xu94JyzUQzJivlT88Y33daRj+tYyvecM472Ln54jp4cP/wHZCdAEUhMYvEgUJ/Y",
+	"cQxWI7WrMwnJBfySgTBLjCKiBsTxOWcpcEkUDYxxLKAXpKU/XQe/ZJhKIhfq/wn+TJIsCU4OB70gIdT+",
+	"KGiLUAkT4Ao0Fo9nkfpuzHiCZXASZBmJHKRYJur3pU97y9kvi6/Y6O8QavCfRpGBanXFIYtA/VubpQZJ",
+	"x3NzzhwPUk5COMdEwFrM6ZfqO9IrsuNXl1EZ27NHDkJ0RFq4RNgroBM5DU4eG5TlP496zW2Oszh+bWFQ",
+	"+vLwaP2nMaFwWPvuaFD97lvPd0eu75o4mDKqV1Y9D2c0IpiihI1IDIhmyQi45iQsk+ibJ4f7CsQlvvio",
+	"/+Ty/aD/5PL6iYsr9oKU0JyAyt8dFt89dH8nJJbQFeY1OikQkG83B2zPYDSfZblKN8kkhJ5KyckoM0vq",
+	"QDlXsFghSo4H7s3HeATx6s0fumA2xzKc/gU+16bc+5MC9Wn/B9wfX14/unnwZ+esWjSsWO0jt+Crwlxt",
+	"OB8q34gXqs+xhAnjGkQ4jn8eByfvWwjA/LMzmmZqsDrHGuMQjDJAJCRiHZP5Qb3+AsaEaqyq1dnlYs7x",
+	"Qv0mbfiuxr0Svc9ZZkRXnY/XYKUHqXzTy9feBNllHWhm993Iscayy1xp4GQTsIARZ3MXC2u8S8RpKMms",
+	"zPNHjMWAaVkadOSEKROktNxcXg4GZZE5cIlMYVW/Vah/y2OtIdYxY3VDK2FyIDRkTb620t69tH6mdKym",
+	"dMWxdMrIthRXAk8TBBmPHYO7qFC92dOLKY3p3csrNiF0M/0HEkzqrO3o4bFra1iIOeNR4+VH63iQmaM0",
+	"gncjJf28A/+xX/nYD85lRXsWVJMxm3Mgq8l3mtdQpmNOjiWhk9PZpDJ1xLJRDMvJjZKwfN/L/RSSYiwh",
+	"qiyvCruW2/Sqlvmhb0Hy9nDrL1wEUodGbkp1A+4781VzQNeSlgCvArM0ea9MXkuIFphfITgqZNvt1I5w",
+	"1IWsvlOvqy0n+POZ+eC4CdAQc2g95HPM4TWTtVEPj1zDWvnYjpT8IvHYLRLHOOxABBboP2BDVKuXPgYs",
+	"Mw7dRzffVSd43Bx/IuQFlvBd2lQGgpfDN4hjCYhQNMKCCJQyQqVAe4ePBwP0DB0+/n8PlPpfSOGjx+uF",
+	"8GqdIMESOMHxK4e+69YxXFrEo/VaBNO77AzXn9NcIVxJyBzTqyZALVIiJBiXiPEIONqL2Rw4GhMuZBWY",
+	"WqVZr9MAtydyLaTElKQpoRN9aNpYhIL8Cq88hoeXz7ZSrnqBSCFsD/1hCuEQwibsXWdGZCNJZNxmj24l",
+	"r8QvlkIhH7QAeZ1Yy/Cq64UV0Pdy5lk63kuCzEFjuWHOXSpH1RJYGyXT0u25U9UsYN9eetnxhlmSYL5w",
+	"ScXUTtWkVckkjttYQXo1dqT8s3U7zFfU9FZ14/756699CkUXveutU91eywTVpjo6xLprQBawQ8nCKze+",
+	"rIrRyXit2knFPmuHqgLk2kSVddWBUYKrlyAuWOzwY7E5BY6eIZgBX8gpoRNEaBjvo0wAN05vAVJpWOIp",
+	"CrHEMZugA8OlBTpA1v+MniE5BcIR5oARo/FCMW2gikG/N5OY/anv1bHW36s/Wf/1pYNW9LLfCuAO6uWg",
+	"1LlTWdW4sYS+JAm4KK8wqDYm3ZXUGWMhtbnXZU1e4uQWWWsZj8aqk+Ry487SnB6xSnoFDL00kyvlm5of",
+	"aw40T7ud5ZJ24tbJXae5vrHVnoC0O4cRV5mbwfhYiJNBXGUVaZeWD3cBqHzQji4Vi8ZNDBqD6CrP+Dkh",
+	"EkmGDAEhjCjM8wCaOva3SBbFUITKR8dBOfozcCp+LUikpPw8cqlsCf5c/uDYRUMVKum8SEsxZffxaf9v",
+	"g/6TS/uvcSN/6/P4W7qq6cRrlOK6UteR4FZTWRYR+T2VLkUDh97AF1bE+b2XL2/A5CMssR/3JnDdWD0U",
+	"gcam0NCPjI60Tm7k2HcYd2lLV4uFVbGk0gIq0NJDlgFkd+7Fza0ouksk369+a7wmjd0UwSCHRmdCeLk+",
+	"EmGuSHrC4kiHuiZTlwJSW15sTRg9mGtZheelsbIRizzktYwaNBedG2trfLiFzz03xPRsngU6RDmOoi4W",
+	"vwl+uxyvEpIVLs1utJbnDrgmokw6gjTBGRUSx7HOf0CECskzfZoEEngGEWJUqag6h2LfxTo0va1d2Bvz",
+	"1k0vmE+JhJcxm63VFP5avHnO2USH1X20b5FRrKYM1nznPtRqeDXQu4rEuths6zZZOMdjQkFDqZsWleDP",
+	"/1hK+aji9jzj4RQLPIoBZZRIgbg6tIiyOdpLCEVsjLSg0gZLCryvVoFikhDjPnIpeto+fu3PvTD2s89K",
+	"LOenOAJKlMgNjNUu2SvF2688fM8lYMo5LuUdVuFRGzqngMa2SlBo4L2KUTfNLoPaK6OvndgmXYPQFSyq",
+	"XUykaspXRl21yxc6Uap9AK2Azu2E7dfGVVbG0/PFXKhZ6svZMsZUhqcTgFNMJ3BuQ5SbBVNDk0h33j5S",
+	"2gsozMvvrz6/9r1GAlZt3uqozt1qlc6Y9tvFjVct2GiRWyQbdAbMti4NtzcjXQ/Kn3kE/C5AORGS0LpZ",
+	"pzO3jm6UWXd5/fDG/D42v98f9p+of/9mko7+dum09gptZ30OSooXCVD5E8gpa4Ga8sulOEgp82+NHujU",
+	"ZHJE1YerL8+FscIULERfPtraJAjD5Bq8yaaVNV6/IjQqWwRJFkuiYxV0YqIZOkXM6Zb02xkmZ7gbY36n",
+	"M8DWcWeTLZabIHr1xXQuSNZTte4iGe9WYFpzzqxM5FsPIy9o3hUpfLUUXq9y4Md6JZvQnyy4Lvm4nAjY",
+	"sytxrf8vgGMFj/rahcQyE2UEsKv1Vq39yjVRx0SsVjlUy/Qp14yaV+/OQr3VoME4i8ckVgxt2AB8Rs3T",
+	"GIyeDSnWn/UCQj9Kjqkg2mUDMZkBN1kpxnqFyHk8CtnStM06mdUawGvt6lsWLPbrJZiqth18ThV1oGeI",
+	"MolSTCKdR02Muc5BAJ8Zo35OaMTmT62lN8cCcYgBC4jKwaYUaGSArcbSkWJiEGFn0tlA44xGHmBzo+R6",
+	"EwW6Csie42jaRX60sFGLjXEIJghIQ/BSQjcvRe30qS+K1dQR4yDpqofRL9n93ov1Ml+TpFHVoubRZzlH",
+	"WEvVJUprSaFDU1XTgJKZczmad9Vuh8udeEt2673wRbS282q09FN0cEuYGMYGzgkXSos9VdnTaaIkMSJU",
+	"sSYBaO+3f/2vQ/QMHQ4GDyrBrkbwxxn6KZuUtYkkUsxMosMjFE4xx6EELvbryu+jqlLkss7O6+y6kEsp",
+	"MQk0xhKVI0yvDKuERD9hbqZTOzBNAa1h1I0ojGkcLsrrO3t94Zz/CmwIpu4VHMUkRFewQGPGtbhIOZuR",
+	"CPjXAoUxASrR8MWPaI/jXxlP8UJnJjzY95Qk6C8rGqwJfeVfO9eWf2c4QtSKvs1EzW97FUiWYOSk12UR",
+	"oLsOrQqsodTe0wSHU0KhzwFH+g/q7R6C/ck++sQy+ZGNP2r5+qmHPs1wTCItez8aIfpp350ZKn1aEnDO",
+	"uFiRxzwmELujawkIUY0p+aqX9BDLD9rkKC8lsiNe5Qm85KOsW0+REFcIUV/FlM3R6uoabCSbNXO7NkwY",
+	"9qUIrx9j6R9sUfC4VWbwDnKBPem/58BDq060SOrvWFHgLSbYOgW3QetFLmxTpd0m3XTrvP+2Kf8FFdbz",
+	"Ry3Iy2kMpfz/Uhbp6tzRHM9u33eZ/DrEnFva/bm9b15fwSRycm0fXG4ZQF4bNrYLeEWE3DaFYJs0WfVk",
+	"SH693SSDYtBV+QbVE9a+7rvuEAunOmtjhRvMG0rp6FmsrLidh7FaK77ew+iYoktFfC7xakoKhIxGmC+Q",
+	"UtiVXqr0kogkQIVhijSL404+2VXeOTcI/LW463KqN63+qR+CCMY4i+W7TtHgnQTzCa0nQpdTXtm8eFrF",
+	"41sdo49hLNF8CtR6bIhAMZs/RXgklGbO5BT4nAhwB+gbNS9NDbFr/ujtNVrYQc1fvQ5ldd1J+3T2ct1H",
+	"7bRNGZfIisnKifsQvMhwjH5Q1scUPY8BS4F++5f/RA+TBL2NJcf9v7z4EHiOY4sEeGuyFxUfvuxDf6Ff",
+	"TpmO0+I6uhf6Y+/JjYgwxYKWw9cSXikgoJIvUAocCYk5imEGcQ89RBGbUyQZ0h0fPEbOirCCGky0kFvm",
+	"vVVxgR0XpdZdiV7EVEDpRAXMCMwdXoRMThn/CUwGZzNZVD/2ery8atAGXv+WrNTsu5KJ+7Blfxr/OZ4B",
+	"J2MCkYvl+kthgwp8LDRKg63L9jc4uY0sUYvdW1TtxPLQrpy4csLLKmH1ML82vVrYGM05kRIo4nrJwiWG",
+	"6qfQjt7bSI8cgnyOudTxKbFhIguLakjpGKQt1QgOaijSHtRfMrDPJc/ApSG51cGybdjeRBllcVxPZfJV",
+	"cBR0tIlds5zKtfg3RVDFFXjsphdERITdvaG58O/4VTaS3WMHEn8+o2GcRRB5fN4vh290YRcmFCJkI3F6",
+	"pl7JEa5ltkCYA5L4c5+oMQWZwSZu8c7baBzMMiTqWKjDt1fBrAMilQW5KOZtGm2XprWbHjB3kpblAcY9",
+	"tHurEcHKpm15kfW6TllNfnr5zd6fT/rFjwf/38lYty6Va2tpOSylu6ijq3KIn3CqJKgZSMcQ0G//9u+m",
+	"aaL+WRKmvrKpLYrrtqmgywHtIhJHpn4z6mSfIMnmmEemqIAlaUwSoBLzBdKVAf2JGgaRclWCJMD3gzrp",
+	"c0gwoZ2Zv5xyEFMWR1uwzdoYvfpamjDS/uQw40QuhmroXFAmhJbCg7qLaMjYFYFlH9F09lG/t6QMnJIf",
+	"YWHaTRI6Zq6oFeMw5oxKdHp+to9O4xgljMLC9ufU0scehVwunb2+QP/9HzpAq8sBXg7fLIXT/gc6lEr3",
+	"D6eYTgidIG74lUAWMOjTc1OT3H+zSOEE1dt6ftKDYiRwAn1BJKCfOZkQuv+BKhaon07UiHmR9AhiRifK",
+	"RlSkgimji4RlYtnVU8MJfUpnHwWJPu1/oEUxz0lwTijFYQzoHfAZKCAYtd5AOhjsH+4PzJEGilMSnATf",
+	"7g/2vzXdB6caOQfL/KmJyZFU1Kc3dBYFJ8ErIqxOGtRasx4NBp16nG7XRsGZteV03zrIssGhyiUjAviM",
+	"hIBwFPXVNrUUwxNhggtcBpfqLweaOg9wFhFZAlbNFaDr5XWBO3oNc4Vm3aSkhx4OtHdAWQL7mhGVYWy6",
+	"gSlA69F7le677+2B+SUDbVvk58WYFkvwWkeHFoXeFm8uMXm5JV7XVgVqw9GBBP0QxWyiwaKwezz41jdi",
+	"scRSH9olt9FgqvKZ95dqZzkiDW8pY9LGjSw5OtH53HQkyAApPcjwl+VnPd0LIYtMVwSsFTbEqHqgmwbb",
+	"VsFRkWcrVmD++XI193rMyu0kb++4lXZ3J1jWFfAOZmb2p30dz5dhQ8vjv7N26O21mK512KzCT1vQDVwf",
+	"7mYFTqTYtLrOGFHvP7mHc3pwTaIbTeKZD7e5sVHg1sVJqw3MjZ/M2758XZfoyy+LfgZ3Rz8G1hvSz/Hv",
+	"hd4OlvV0luyqULgAnZsrtPpmWL5AYsrm1NQUE5GLjMXXAsVESCUvlMBDe6ab2TOk2atRCB94ZIT2Dpph",
+	"fjAL+rJpu4Nxv32f4VWtzdoWMv4vPlxHR3d2uIzjymloaJD8BMGuoa5bRnkufRBkQiHqE4rM0jU0D+8Q",
+	"OgdlJ52T35iCV8Nuasv9WqD8c9Oai0yoQCyTtvuWDqnnhqVPGa0W1O5IO3JX7bY6g8cOn0u+aW2154fm",
+	"8Is9BDZrvb3dMQTMwykaLZDi6z0k4myCGEfDH98+tUYIiKUNko+/j44etrE6z/P1tDI8f6lYnas7XN70",
+	"3GNU+tq1l0ee0XDes2w5UjM2+ru2outNKV0ejRyJd2xguWwKkWfb6xt09grCzKgkMSISTbFAmCL7Zxv1",
+	"NnfoCCTmRIZT3ZPFpw2ZafK24zvUwKs9ylsbcKshX71+aNfW1/3wtsJW88v6lyCXGLwbXbZ5PneNqePd",
+	"H8S1VonFydciv49Jn7S8N+de/XIr87i42WqKZ5ArEHOKgEamo7XvbBrN9a4x+8Wc/y+Oqn5H/OKgeudD",
+	"F8qu3MuG9nSeopjiFBDjE0xJ2B9zAEVKPZTnjqIpplF/zPgEov6IYyFWWN+n5fsC/iCW961csbE0vh8N",
+	"1hjfpfm2MMC/sMN1b4eldA3I+pPyIVAMXaA5xLEOT3wItDOqqxPqorgp4w9yBixMz6LqGVibkbHC59Qi",
+	"Va406/+dhK1PQrm2zHkU3qYCuBTFPZ5ojyVEIhItGxU/2Efv8qe6NIFlUucPRKDNFEX1PURhpkN6Meif",
+	"IwhxJiCP5XMYAwcaan0p8R+id8sytD/IKdrqVp/8BqjSmSrfO+GWJcWMf5zz8wWraWKZvWOI32PTvWIT",
+	"lsmgjdduqJ2X6pjdrgtiqL2ehGoHg3p3H52GOt1ToJiFV7obwOFDlBCqNBGEx0pxfKjsIbUG7ZEYYxJn",
+	"HLwBezbRiUo7MzsqN8PdR2jC5yS3SCP0KRIgrRJuM7dsqtJm3teO8T0/peqbKdok6Pj9oW+FuX3iftMw",
+	"DApuLQXjNI7NcUDYnob79RSuxYTx8Wko7CgI0WymeR8pGr6j9jtJz9DnbZmZoYuXV+bFvSACj2JCJ8YD",
+	"rGkRMa57eemrZBCRpUCWCWIRo4/pe2jmU+Cwj95MAcVYyNyLbO6qCTGlTKKR0tsSJpWA4SjSU5pGYF6P",
+	"laW036u7ylFz8CUJjj9cskho2+U7/dsvTS1XsInaaa/7d+agqv+WEnZXmf0mQAxSNz+HGEJ1FmqprtZP",
+	"Vs5In2OdQ51R6XACVErUdsSVnWVwt6XSG9huoDr7cLEstPPkG0ZF7/1dqYtRvbTm1oH1pdkxK5FxcK3+",
+	"OTPiyGerXEDCZlBBzd1Ap7n6VhJH72hbqVPI5iosqvVZwS6l0++bUldQXtEc1cmRv1NjXVne+iEbDI4e",
+	"VSt/yveRPEUh5pxoI8sWhRgPLZYonEJ4xTLp5cyvWX6f8c49Pq07j9csFt8tJbdKCj5UOTL+m9UuX0Yq",
+	"/g6y8E1NaamCoQYoc/1iHVYH1yLOJjerdR1fvrVrh8tXDszFtrtMnaldsOGvTViYog1lezQLN7Zk9GXA",
+	"TosG3T5o2hbeOwSKncHl38kVRBqhCEs8wgK0F5wDDqfKiFKgeNjVa5CDQiyEkjEGEhTmIgYpgR+IbFSs",
+	"YoU6NTSvjeB18ekWzG7z6xyclxpsxtKOHA7MfJcR2iMRJClT+3mwlaqUYH4FuhWIgb29YbUE6dqhYHSm",
+	"IybGirCliJhLI5UwzYUSjRBLgQqEke2InL++jy5A8oUy6PXJ0iPhBNBZvqdw0f8RFoiDzDgVVtSRCaE4",
+	"NsM35Vzp1g6PrT4FbB5a3ak220olqny9wHG1k+6jXv1CRlPx/bF/+c1Xd2flO24tuWOfVaUjt4OD6Oc2",
+	"phY9zfvsJpmQpg4aJOSUcqfGgqX4MvkfXHMYrxRsqwitqqKb5ul+0ioRz/m7fn6h5/Wj3uHRzVft09Vu",
+	"D4V+3LE5hQiNFqZ23dxRlB/qrQRhBQWWBsRBwsKrg+tas+Obg5xY/DzqBcwgZqnmOYzGC7R3fvpPP33/",
+	"+s3H84uf3529+P7imRr7wT4akiSLi7zUCZYwxwu1Q2Ea7SNsU+nRHEZTxq6QnHKWTab2kgEcFw8U1h1s",
+	"yS72JxZenS+b9q+lmmaL59bM6RYZTq2pfiZDllRuxBRZGJpe/jYwtv7mkHyUzaSiI1z41xwBnKm15K7E",
+	"DUkxp746MVo0iyVB3vgJ8KUlpBDH8QiHV/tIgR4RgfLOWghPsDLuKt3HNa2ZrnpGWKERjBlXbJELQidN",
+	"8rqAEMgMLGVZSHQisJWU1b6h+e1nEzgv3W1tC9btmxBSqdQmHAtm9QqIdMA3yszaAMFMYfrBRrU9PvJp",
+	"FnQ0zcpuVRalrsZOIVLu5vXo2ClCeg7PMGDT6F2XweWGzqcrWJzozMlPea/3PEXyRLCYRH0J+Ep3d4fP",
+	"aazbthq8uVZuBq2su0U7spPKhta2JzsauLq2L3RTjDHjSeAr+NApHSQEd91Jm3ZU3pHx5x2NvGxm2b3A",
+	"RTAdhnAUuOQdsKPS7TilP+kGOR+xCIv/K2IqtxSkusGFUxRsW2yzrrGTf3zbZs81x1FpkuPH91jOU26Z",
+	"7arkwROIiuqZWL+leNXgNtwPy8S5tV4dbwr/vTt1qjcj+IuhjOFpmz5pW7XIGrs9h04NouW0XK8ssFm0",
+	"fpFwJyDeZa/2zVuFZFyBxpmwnFZq3HaEPd3ts40kv7Cvboa8L5JHPizNcXSfFY+ljrMOGjHNXJHtt6rU",
+	"vRil2SgmYgoRMgJKmPZetS6uPURLbZlui47MNRqzHP/6rsPgAKfkYHYYlBIIrgupbPygCklLfU+PVvmT",
+	"jmoVv635XPpLoYaW/rb09DUVwKHE43HfpOFcmNNZS+GrdR3bU9YEsjsxCT89NMQJDImEZ0PJSSgfIPis",
+	"9G6tZivTpk/ofqk41xTSX978TwAAAP//",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

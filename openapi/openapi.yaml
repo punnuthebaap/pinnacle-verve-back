@@ -494,6 +494,273 @@ paths:
               schema: { $ref: "#/components/schemas/AuditPage" }
         "403": { $ref: "#/components/responses/Problem" }
 
+  /admin/categories:
+    get:
+      tags: [admin]
+      operationId: adminListCategories
+      description: Catalogue role. All categories, including inactive ones, with filter definitions.
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AdminCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [admin]
+      operationId: adminCreateCategory
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminCategoryInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/categories/{id}:
+    put:
+      tags: [admin]
+      operationId: adminUpdateCategory
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminCategoryInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+
+  /admin/categories/{id}/facets:
+    put:
+      tags: [admin]
+      operationId: adminSetCategoryFacets
+      description: Replaces the filters shown on this category's listing page (order = array order).
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facets]
+              additionalProperties: false
+              properties:
+                facets:
+                  type: array
+                  maxItems: 12
+                  items: { $ref: "#/components/schemas/FacetDefinition" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/products:
+    get:
+      tags: [admin]
+      operationId: adminListProducts
+      description: Catalogue role. Search by name, slug or SKU; includes inactive products. 25 per page.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 80 }
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: active
+          in: query
+          schema: { type: boolean }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminProductPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [admin]
+      operationId: adminCreateProduct
+      description: Creates the product (inactive until it has an active variant and is switched on).
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProductInput" }
+      responses:
+        "201": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/products/{id}:
+    get:
+      tags: [admin]
+      operationId: adminGetProduct
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: adminUpdateProduct
+      description: Replaces the product's details and content (variants, filters and pairings have their own endpoints).
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminProductInput" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/products/{id}/variants:
+    put:
+      tags: [admin]
+      operationId: adminSetVariants
+      description: Upserts variants (omit id to create). Variants left out are deactivated, never deleted, because orders reference them.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variants]
+              additionalProperties: false
+              properties:
+                variants:
+                  type: array
+                  maxItems: 200
+                  items: { $ref: "#/components/schemas/AdminVariantInput" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/products/{id}/attributes:
+    put:
+      tags: [admin]
+      operationId: adminSetAttributes
+      description: Replaces the product's filter values (e.g. shape organic-freeform, material hand-forged-brass).
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attributes]
+              additionalProperties: false
+              properties:
+                attributes:
+                  type: array
+                  maxItems: 60
+                  items: { $ref: "#/components/schemas/AdminAttribute" }
+      responses:
+        "200": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/products/{id}/related:
+    put:
+      tags: [admin]
+      operationId: adminSetRelated
+      description: Replaces the "pairs well with" list (order = array order).
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productIds]
+              additionalProperties: false
+              properties:
+                productIds:
+                  type: array
+                  maxItems: 12
+                  uniqueItems: true
+                  items: { type: string, format: uuid }
+      responses:
+        "200": { $ref: "#/components/responses/AdminProduct" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+
 components:
   securitySchemes:
     adminSession:
@@ -508,6 +775,11 @@ components:
       schema: { type: string, pattern: "^[a-z0-9-]{1,80}$" }
 
   responses:
+    AdminProduct:
+      description: The product with variants, filter values, pairings and images
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AdminProduct" }
     Problem:
       description: Error (RFC 9457 problem details)
       content:
@@ -520,6 +792,190 @@ components:
           schema: { $ref: "#/components/schemas/Cart" }
 
   schemas:
+    UrlSlug:
+      type: string
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      minLength: 2
+      maxLength: 80
+
+    FacetDefinition:
+      type: object
+      required: [key, label, kind]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: "^[a-z0-9-]{1,40}$" }
+        label: { type: string, minLength: 1, maxLength: 60 }
+        kind: { type: string, enum: [multi, single, swatch] }
+
+    AdminCategoryInput:
+      type: object
+      required: [slug, name, eyebrow, description, position, isActive]
+      additionalProperties: false
+      properties:
+        slug: { $ref: "#/components/schemas/UrlSlug" }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        eyebrow: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 1000 }
+        position: { type: integer, minimum: 0, maximum: 10000 }
+        isActive: { type: boolean }
+
+    AdminCategory:
+      allOf:
+        - $ref: "#/components/schemas/AdminCategoryInput"
+        - type: object
+          required: [id, productCount, facets]
+          properties:
+            id: { type: string, format: uuid }
+            productCount: { type: integer }
+            facets:
+              type: array
+              items: { $ref: "#/components/schemas/FacetDefinition" }
+
+    AdminProductSummary:
+      type: object
+      required: [id, slug, name, isActive, categoryId, categoryName, variantCount, totalStock, minPricePaise, imageUrl]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        isActive: { type: boolean }
+        categoryId: { type: string, format: uuid }
+        categoryName: { type: string }
+        variantCount: { type: integer }
+        totalStock: { type: integer }
+        minPricePaise: { $ref: "#/components/schemas/Paise" }
+        imageUrl: { type: string }
+
+    AdminProductPage:
+      type: object
+      required: [items, page, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminProductSummary" }
+        page: { type: integer }
+        total: { type: integer }
+
+    AdminProductInput:
+      type: object
+      required: [slug, categoryId, name, subtitle, series, materialLabel, sizeLabel, description, shippingNote, badges, features, options, specs, care, facts, gstRateBps, rank, isActive]
+      additionalProperties: false
+      properties:
+        slug: { $ref: "#/components/schemas/UrlSlug" }
+        categoryId: { type: string, format: uuid }
+        name: { type: string, minLength: 2, maxLength: 160 }
+        subtitle: { type: string, maxLength: 200 }
+        series: { type: string, maxLength: 120 }
+        materialLabel: { type: string, maxLength: 120 }
+        sizeLabel: { type: string, maxLength: 80 }
+        description: { type: string, maxLength: 4000 }
+        shippingNote: { type: string, maxLength: 200 }
+        badges:
+          type: array
+          maxItems: 4
+          items: { $ref: "#/components/schemas/Badge" }
+        features:
+          type: array
+          maxItems: 8
+          items: { $ref: "#/components/schemas/ProductFeature" }
+        options:
+          type: array
+          maxItems: 4
+          items: { $ref: "#/components/schemas/ProductOption" }
+        specs:
+          type: array
+          maxItems: 12
+          items: { $ref: "#/components/schemas/SpecSection" }
+        care:
+          type: array
+          maxItems: 12
+          items: { $ref: "#/components/schemas/CareNote" }
+        facts:
+          type: array
+          maxItems: 12
+          items: { $ref: "#/components/schemas/ProductFact" }
+        gstRateBps: { type: integer, minimum: 0, maximum: 2800, description: "GST rate in basis points (1800 = 18%)." }
+        rank: { type: integer, minimum: 0, maximum: 100000, description: Featured sort order (lower first). }
+        isActive: { type: boolean }
+
+    AdminVariant:
+      type: object
+      required: [id, sku, options, pricePaise, mrpPaise, stock, position, isActive]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        options:
+          type: object
+          additionalProperties: { type: string }
+        pricePaise: { $ref: "#/components/schemas/Paise" }
+        mrpPaise: { $ref: "#/components/schemas/Paise" }
+        stock: { type: integer }
+        position: { type: integer }
+        isActive: { type: boolean }
+
+    AdminVariantInput:
+      type: object
+      required: [sku, options, pricePaise, mrpPaise, stock, isActive]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid, description: Omit to create a new variant. }
+        sku: { type: string, pattern: "^[A-Z0-9][A-Z0-9-]{1,63}$" }
+        options:
+          type: object
+          maxProperties: 4
+          additionalProperties: { type: string, maxLength: 60 }
+        pricePaise: { type: integer, format: int64, minimum: 100 }
+        mrpPaise: { type: integer, format: int64, minimum: 100 }
+        stock: { type: integer, minimum: 0, maximum: 1000000 }
+        isActive: { type: boolean }
+
+    AdminAttribute:
+      type: object
+      required: [key, value, label]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: "^[a-z0-9-]{1,40}$" }
+        value: { type: string, pattern: "^[a-z0-9-]{1,60}$" }
+        label: { type: string, minLength: 1, maxLength: 80 }
+        swatchHex: { type: string, pattern: "^(#[0-9A-Fa-f]{6})?$" }
+
+    AdminProduct:
+      allOf:
+        - $ref: "#/components/schemas/AdminProductInput"
+        - type: object
+          required: [id, ratingAvg, ratingCount, variants, attributes, related, images]
+          properties:
+            id: { type: string, format: uuid }
+            ratingAvg: { type: number, format: double }
+            ratingCount: { type: integer }
+            variants:
+              type: array
+              items: { $ref: "#/components/schemas/AdminVariant" }
+            attributes:
+              type: array
+              items: { $ref: "#/components/schemas/AdminAttribute" }
+            related:
+              type: array
+              items:
+                type: object
+                required: [id, name, slug]
+                properties:
+                  id: { type: string, format: uuid }
+                  name: { type: string }
+                  slug: { type: string }
+            images:
+              type: array
+              items: { $ref: "#/components/schemas/AdminImage" }
+
+    AdminImage:
+      type: object
+      required: [id, url, alt, position]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        alt: { type: string }
+        position: { type: integer }
+
     AdminRole:
       type: string
       enum: [owner, catalog, orders, content]

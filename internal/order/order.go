@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -122,9 +123,12 @@ func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idem
 	if err != nil {
 		return uuid.Nil, err
 	}
-	c, err := cart.Load(ctx, q, cartRow.ID, cartRow.AddonCodes, s.cfg)
+	c, err := cart.Load(ctx, q, cartRow, s.cfg)
 	if err != nil {
 		return uuid.Nil, err
+	}
+	if in.Notes == "" {
+		in.Notes = c.Notes // instructions entered on the cart page
 	}
 	if len(c.Lines) == 0 {
 		return uuid.Nil, ErrEmptyCart
@@ -242,6 +246,11 @@ func (s *Service) HandleWebhook(ctx context.Context, provider string, h http.Hea
 		if err != nil {
 			return err
 		}
+		if pay.Status == "expired" && ev.Type == payment.EventCaptured {
+			// Customer paid after the reservation lapsed: never auto-accept (stock was released).
+			s.log.Error("payment captured after order expiry; refund or reinstate manually", "order_id", pay.OrderID, "provider_payment_id", ev.ProviderPaymentID)
+			return event(ctx, q, pay.OrderID, "payment_captured_after_expiry", ev)
+		}
 		if pay.Status != "created" {
 			return nil // already final; events can arrive out of order
 		}
@@ -318,7 +327,58 @@ func (s *Service) clearCart(ctx context.Context, q *store.Queries, orderID uuid.
 	if err := q.DeleteCartItems(ctx, c.ID); err != nil {
 		return err
 	}
+	if err := q.SetCartNotes(ctx, store.SetCartNotesParams{ID: c.ID, Notes: ""}); err != nil {
+		return err
+	}
 	return q.SetCartAddons(ctx, store.SetCartAddonsParams{ID: c.ID, AddonCodes: []string{}})
+}
+
+// ExpirePending cancels unpaid orders older than ttl, releasing their reserved stock. Safe to run
+// concurrently from several instances (rows are claimed with SKIP LOCKED). Returns how many expired.
+func (s *Service) ExpirePending(ctx context.Context, ttl time.Duration) (int, error) {
+	var n int
+	err := database.InTx(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		ids, err := q.LockExpiredPendingOrders(ctx, int32(ttl.Minutes()))
+		if err != nil {
+			return err
+		}
+		for _, id := range ids {
+			if err := q.ReleaseOrderStock(ctx, id); err != nil {
+				return err
+			}
+			if err := q.ExpireOrderPayments(ctx, id); err != nil {
+				return err
+			}
+			if err := q.UpdateOrderPaymentState(ctx, store.UpdateOrderPaymentStateParams{ID: id, Status: "cancelled", PaymentStatus: "expired"}); err != nil {
+				return err
+			}
+			if err := event(ctx, q, id, "order_expired", map[string]any{"ttl_minutes": ttl.Minutes()}); err != nil {
+				return err
+			}
+		}
+		n = len(ids)
+		return nil
+	})
+	return n, err
+}
+
+// RunExpirySweeper calls ExpirePending every interval until ctx is cancelled.
+func (s *Service) RunExpirySweeper(ctx context.Context, ttl, interval time.Duration) {
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if n, err := s.ExpirePending(ctx, ttl); err != nil {
+				s.log.Error("expire pending orders", "err", err)
+			} else if n > 0 {
+				s.log.Info("expired pending orders", "count", n)
+			}
+		}
+	}
 }
 
 func event(ctx context.Context, q *store.Queries, orderID uuid.UUID, typ string, data any) error {

@@ -23,8 +23,23 @@ import (
 	"github.com/pinnacleverve/api/internal/store"
 )
 
-// NewHandler assembles services and the middleware stack. Shared with integration tests.
+// App is the assembled service: the HTTP handler plus background work.
+type App struct {
+	Handler http.Handler
+	Orders  *order.Service
+}
+
+// NewHandler returns just the HTTP handler (kept for callers that need no background work).
 func NewHandler(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (http.Handler, error) {
+	a, err := New(cfg, log, pool)
+	if err != nil {
+		return nil, err
+	}
+	return a.Handler, nil
+}
+
+// New assembles services and the middleware stack. Shared with integration tests.
+func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) {
 	var provider payment.Provider
 	switch cfg.PaymentProvider {
 	case "mock":
@@ -59,12 +74,13 @@ func NewHandler(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (http.H
 		},
 	})
 
-	return httpx.Chain(srv.Handler(http.NewServeMux()),
+	handler := httpx.Chain(srv.Handler(http.NewServeMux()),
 		httpx.Observe(log),
 		httpx.Harden(1<<20),
 		httpx.SameOrigin(cfg.AllowedOrigins),
 		session.Middleware(cfg.CookieSecure, cart.Persister(q)),
 		httpapi.CaptureWebhook,
 		validate,
-	), nil
+	)
+	return &App{Handler: handler, Orders: srv.Orders}, nil
 }

@@ -1,6 +1,6 @@
 # Handoff — backend
 
-_Last updated: 2026-10-27 · Current milestone: M2 (next)_
+_Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Done (M0 + M1)
 
@@ -21,19 +21,21 @@ _Last updated: 2026-10-27 · Current milestone: M2 (next)_
 
 - ✅ Product content API: `specs`/`care`/`facts` on product detail, `GET /products/{slug}/reviews` (summary + written reviews), `GET /products/{slug}/related`; migration 00002; ratings derived from reviews; integration test extended.
 
+## M4 progress
+
+- ✅ Cart notes (`PUT /cart/notes`, copied into the order), pending-order expiry sweeper with late-capture flagging (migration 00003). Integration test `TestPendingOrderExpiry`.
+
 ## Known issues / gaps
 
 - Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
-
-- Pending orders never expire → abandoned checkouts keep stock reserved. Add a sweeper (cancel + release after N minutes) in M4.
+- Late captures after expiry (`payment_captured_after_expiry` events) need an ops view/refund flow once Razorpay is live.
 - Gateway order creation runs inside the DB transaction (fine for mock; move after commit for Razorpay).
 - No rate limiting yet (newsletter, cart, orders) — M7.
 - Discounts/coupons not implemented; GST is one "included" figure (CGST/SGST split blocked by B3).
 - `ListProducts` returns `total=0` when the requested page is beyond the last page (window count).
-- Changes are **not committed**; review and commit when ready.
 
 ## Next steps (in order)
 
-1. Pending-order expiry job; move gateway call after commit.
+1. Move the gateway order call after commit (with retry) before Razorpay goes live.
 2. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

@@ -11,17 +11,26 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/pinnacleverve/api/db"
 	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/database"
 )
 
-// Integration test: runs the full purchase journey against a real Postgres.
-// Uses TEST_DATABASE_URL (default: local dev cluster, database pinnacle_test, created if missing).
-func TestPurchaseJourney(t *testing.T) {
+// stack is a freshly seeded API backed by a real Postgres (integration tests run serially).
+type stack struct {
+	app  *App
+	pool *pgxpool.Pool
+	c    *client
+}
+
+// newStack uses TEST_DATABASE_URL (default: local dev cluster, database pinnacle_test, created if missing).
+func newStack(t *testing.T) *stack {
+	t.Helper()
 	ctx := context.Background()
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
@@ -34,24 +43,110 @@ func TestPurchaseJourney(t *testing.T) {
 	if err != nil {
 		t.Skipf("no test database available: %v", err)
 	}
-	defer pool.Close()
+	t.Cleanup(pool.Close)
 	if err := database.Migrate(ctx, pool); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, db.DevSeed); err != nil {
 		t.Fatal(err)
 	}
-
 	cfg, _ := config.Load()
 	cfg.DatabaseURL = url
-	h, err := NewHandler(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pool)
+	a, err := New(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pool)
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := httptest.NewServer(h)
-	defer srv.Close()
+	srv := httptest.NewServer(a.Handler)
+	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
-	c := &client{t: t, base: srv.URL + "/api/v1", http: &http.Client{Jar: jar}}
+	return &stack{app: a, pool: pool, c: &client{t: t, base: srv.URL + "/api/v1", origin: "http://localhost:3000", http: &http.Client{Jar: jar}}}
+}
+
+var checkoutBody = map[string]any{
+	"email":         "buyer@example.com",
+	"paymentMethod": "upi",
+	"shippingAddress": map[string]any{
+		"fullName": "Test Buyer", "phone": "9845012890", "line1": "Penthouse 402, Aura Manor",
+		"city": "Bengaluru", "state": "Karnataka", "pincode": "560038",
+	},
+}
+
+// Unpaid orders expire, release stock, and a capture arriving afterwards is recorded but not accepted.
+func TestPendingOrderExpiry(t *testing.T) {
+	s := newStack(t)
+	ctx := context.Background()
+	var product struct {
+		DefaultVariantID string `json:"defaultVariantId"`
+	}
+	s.c.do("GET", "/products/zenith-minimalist-round", "", nil, 200, &product)
+	stock := func() (n int) {
+		if err := s.pool.QueryRow(ctx, "SELECT stock FROM product_variants WHERE id = $1", product.DefaultVariantID).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	before := stock()
+
+	var cart struct{ Notes string }
+	s.c.do("POST", "/cart/items", "", map[string]any{"variantId": product.DefaultVariantID, "quantity": 2}, 200, nil)
+	s.c.do("PUT", "/cart/notes", "", map[string]any{"notes": "  Fluted wood paneling; use toggle anchors.  "}, 200, &cart)
+	if cart.Notes != "Fluted wood paneling; use toggle anchors." {
+		t.Fatalf("notes not trimmed/saved: %q", cart.Notes)
+	}
+	var created struct {
+		Order struct {
+			Ref   string `json:"ref"`
+			Notes string `json:"notes"`
+		} `json:"order"`
+		Payment struct {
+			ProviderOrderID string `json:"providerOrderId"`
+		} `json:"payment"`
+	}
+	s.c.do("POST", "/orders", "expiry-test-key-0001", checkoutBody, 201, &created)
+	if created.Order.Notes != cart.Notes {
+		t.Fatalf("order did not inherit cart notes: %q", created.Order.Notes)
+	}
+	if got := stock(); got != before-2 {
+		t.Fatalf("stock after reserve = %d, want %d", got, before-2)
+	}
+
+	// Not yet expired: nothing happens.
+	if n, err := s.app.Orders.ExpirePending(ctx, 30*time.Minute); err != nil || n != 0 {
+		t.Fatalf("premature expiry: n=%d err=%v", n, err)
+	}
+	if _, err := s.pool.Exec(ctx, "UPDATE orders SET created_at = now() - interval '31 minutes' WHERE ref = $1", created.Order.Ref); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := s.app.Orders.ExpirePending(ctx, 30*time.Minute); err != nil || n != 1 {
+		t.Fatalf("expire: n=%d err=%v", n, err)
+	}
+	if got := stock(); got != before {
+		t.Fatalf("stock after expiry = %d, want %d", got, before)
+	}
+	var order struct{ Status, PaymentStatus string }
+	s.c.do("GET", "/orders/"+created.Order.Ref, "", nil, 200, &order)
+	if order.Status != "cancelled" || order.PaymentStatus != "expired" {
+		t.Fatalf("order after expiry: %+v", order)
+	}
+
+	// Late capture: order stays cancelled; an event flags it for a manual refund.
+	s.c.do("POST", "/payments/mock/"+created.Payment.ProviderOrderID+"/complete", "", map[string]any{"outcome": "success"}, 204, nil)
+	s.c.do("GET", "/orders/"+created.Order.Ref, "", nil, 200, &order)
+	if order.Status != "cancelled" || order.PaymentStatus != "expired" {
+		t.Fatalf("late capture changed the order: %+v", order)
+	}
+	var flagged bool
+	if err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM order_events e JOIN orders o ON o.id = e.order_id
+		WHERE o.ref = $1 AND e.type = 'payment_captured_after_expiry')`, created.Order.Ref).Scan(&flagged); err != nil || !flagged {
+		t.Fatalf("late capture not flagged (err %v)", err)
+	}
+}
+
+// Integration test: runs the full purchase journey against a real Postgres.
+func TestPurchaseJourney(t *testing.T) {
+	s := newStack(t)
+	ctx, pool, c := context.Background(), s.pool, s.c
+	c.origin = ""
 
 	var health map[string]string
 	c.do("GET", "/health", "", nil, 200, &health)

@@ -12,6 +12,15 @@ import (
 	"github.com/google/uuid"
 )
 
+const expireOrderPayments = `-- name: ExpireOrderPayments :exec
+UPDATE payments SET status = 'expired', updated_at = now() WHERE order_id = $1 AND status = 'created'
+`
+
+func (q *Queries) ExpireOrderPayments(ctx context.Context, orderID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, expireOrderPayments, orderID)
+	return err
+}
+
 const getOrderByID = `-- name: GetOrderByID :one
 SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at FROM orders WHERE id = $1
 `
@@ -352,6 +361,36 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID uuid.UUID) ([]Orde
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockExpiredPendingOrders = `-- name: LockExpiredPendingOrders :many
+SELECT id FROM orders
+WHERE status = 'pending_payment' AND created_at < now() - make_interval(mins => $1::int)
+ORDER BY created_at
+LIMIT 100
+FOR UPDATE SKIP LOCKED
+`
+
+// Unpaid orders whose reservation window has lapsed. SKIP LOCKED lets concurrent sweepers (multiple
+// instances) and in-flight webhooks proceed without blocking each other.
+func (q *Queries) LockExpiredPendingOrders(ctx context.Context, ttlMinutes int32) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, lockExpiredPendingOrders, ttlMinutes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

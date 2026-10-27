@@ -221,6 +221,24 @@ paths:
         "200": { $ref: "#/components/responses/Cart" }
         "422": { $ref: "#/components/responses/Problem" }
 
+  /cart/notes:
+    put:
+      tags: [cart]
+      operationId: setCartNotes
+      description: Bespoke wall & installation instructions; carried into the order at checkout.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notes]
+              additionalProperties: false
+              properties:
+                notes: { type: string, maxLength: 1000 }
+      responses:
+        "200": { $ref: "#/components/responses/Cart" }
+
   /addons:
     get:
       tags: [cart]
@@ -699,8 +717,9 @@ components:
 
     Cart:
       type: object
-      required: [items, addons, totals, itemCount]
+      required: [items, addons, totals, itemCount, notes]
       properties:
+        notes: { type: string, description: Installation instructions saved on the cart. }
         items:
           type: array
           items: { $ref: "#/components/schemas/CartItem" }
@@ -768,7 +787,10 @@ components:
       properties:
         ref: { type: string }
         status: { type: string, enum: [pending_payment, placed, cancelled] }
-        paymentStatus: { type: string, enum: [pending, paid, failed, refunded] }
+        paymentStatus:
+          type: string
+          enum: [pending, paid, failed, expired, refunded]
+          description: "expired = not paid within the reservation window; stock was released."
         fulfilmentStatus: { type: string, enum: [unfulfilled, preparing, in_transit, delivered, installed] }
         createdAt: { type: string, format: date-time }
         email: { type: string }

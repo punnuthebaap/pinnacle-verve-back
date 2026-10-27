@@ -3,12 +3,12 @@ INSERT INTO sessions (id, expires_at) VALUES ($1, $2)
 ON CONFLICT (id) DO UPDATE SET last_seen = now(), expires_at = EXCLUDED.expires_at;
 
 -- name: GetCartBySession :one
-SELECT id, addon_codes FROM carts WHERE session_id = $1;
+SELECT id, addon_codes, notes FROM carts WHERE session_id = $1;
 
 -- name: CreateCart :one
 INSERT INTO carts (session_id) VALUES ($1)
 ON CONFLICT (session_id) DO UPDATE SET updated_at = now()
-RETURNING id, addon_codes;
+RETURNING id, addon_codes, notes;
 
 -- name: ListCartLines :many
 SELECT ci.id, ci.quantity, v.id AS variant_id, v.sku, v.options, v.price_paise, v.stock,
@@ -61,3 +61,6 @@ SELECT code, name, description, price_paise FROM addons WHERE is_active ORDER BY
 SELECT code, name, description, price_paise FROM addons
 WHERE is_active AND code = ANY(sqlc.arg(codes)::text[])
 ORDER BY position, code;
+
+-- name: SetCartNotes :exec
+UPDATE carts SET notes = $2, updated_at = now() WHERE id = $1;

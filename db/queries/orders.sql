@@ -64,3 +64,15 @@ ON CONFLICT DO NOTHING;
 -- name: InsertNewsletterSubscriber :exec
 INSERT INTO newsletter_subscribers (email) VALUES (lower(sqlc.arg(email)::text))
 ON CONFLICT DO NOTHING;
+
+-- Unpaid orders whose reservation window has lapsed. SKIP LOCKED lets concurrent sweepers (multiple
+-- instances) and in-flight webhooks proceed without blocking each other.
+-- name: LockExpiredPendingOrders :many
+SELECT id FROM orders
+WHERE status = 'pending_payment' AND created_at < now() - make_interval(mins => sqlc.arg(ttl_minutes)::int)
+ORDER BY created_at
+LIMIT 100
+FOR UPDATE SKIP LOCKED;
+
+-- name: ExpireOrderPayments :exec
+UPDATE payments SET status = 'expired', updated_at = now() WHERE order_id = $1 AND status = 'created';

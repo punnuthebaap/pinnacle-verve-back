@@ -25,6 +25,7 @@ type Cart struct {
 	SessionID  []byte
 	AddonCodes []string
 	UpdatedAt  pgtype.Timestamptz
+	Notes      string
 }
 
 type CartItem struct {

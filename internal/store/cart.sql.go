@@ -16,18 +16,19 @@ import (
 const createCart = `-- name: CreateCart :one
 INSERT INTO carts (session_id) VALUES ($1)
 ON CONFLICT (session_id) DO UPDATE SET updated_at = now()
-RETURNING id, addon_codes
+RETURNING id, addon_codes, notes
 `
 
 type CreateCartRow struct {
 	ID         uuid.UUID
 	AddonCodes []string
+	Notes      string
 }
 
 func (q *Queries) CreateCart(ctx context.Context, sessionID []byte) (CreateCartRow, error) {
 	row := q.db.QueryRow(ctx, createCart, sessionID)
 	var i CreateCartRow
-	err := row.Scan(&i.ID, &i.AddonCodes)
+	err := row.Scan(&i.ID, &i.AddonCodes, &i.Notes)
 	return i, err
 }
 
@@ -58,18 +59,19 @@ func (q *Queries) DeleteCartItems(ctx context.Context, cartID uuid.UUID) error {
 }
 
 const getCartBySession = `-- name: GetCartBySession :one
-SELECT id, addon_codes FROM carts WHERE session_id = $1
+SELECT id, addon_codes, notes FROM carts WHERE session_id = $1
 `
 
 type GetCartBySessionRow struct {
 	ID         uuid.UUID
 	AddonCodes []string
+	Notes      string
 }
 
 func (q *Queries) GetCartBySession(ctx context.Context, sessionID []byte) (GetCartBySessionRow, error) {
 	row := q.db.QueryRow(ctx, getCartBySession, sessionID)
 	var i GetCartBySessionRow
-	err := row.Scan(&i.ID, &i.AddonCodes)
+	err := row.Scan(&i.ID, &i.AddonCodes, &i.Notes)
 	return i, err
 }
 
@@ -280,6 +282,20 @@ type SetCartAddonsParams struct {
 
 func (q *Queries) SetCartAddons(ctx context.Context, arg SetCartAddonsParams) error {
 	_, err := q.db.Exec(ctx, setCartAddons, arg.ID, arg.AddonCodes)
+	return err
+}
+
+const setCartNotes = `-- name: SetCartNotes :exec
+UPDATE carts SET notes = $2, updated_at = now() WHERE id = $1
+`
+
+type SetCartNotesParams struct {
+	ID    uuid.UUID
+	Notes string
+}
+
+func (q *Queries) SetCartNotes(ctx context.Context, arg SetCartNotesParams) error {
+	_, err := q.db.Exec(ctx, setCartNotes, arg.ID, arg.Notes)
 	return err
 }
 

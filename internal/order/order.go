@@ -30,14 +30,14 @@ import (
 )
 
 var (
-	ErrNotFound           = errors.New("order: not found")
-	ErrEmptyCart          = errors.New("order: cart is empty")
-	ErrUnavailable        = errors.New("order: an item is no longer available")
-	ErrOutOfStock         = errors.New("order: insufficient stock")
-	ErrMethodUnavailable  = errors.New("order: payment method unavailable")
-	ErrDuplicateInFlight  = errors.New("order: duplicate request in progress")
-	ErrUnknownProvider    = errors.New("order: unknown payment provider")
-	ErrMockNotEnabled     = errors.New("order: mock payments disabled")
+	ErrNotFound          = errors.New("order: not found")
+	ErrEmptyCart         = errors.New("order: cart is empty")
+	ErrUnavailable       = errors.New("order: an item is no longer available")
+	ErrOutOfStock        = errors.New("order: insufficient stock")
+	ErrMethodUnavailable = errors.New("order: payment method unavailable")
+	ErrDuplicateInFlight = errors.New("order: duplicate request in progress")
+	ErrUnknownProvider   = errors.New("order: unknown payment provider")
+	ErrMockNotEnabled    = errors.New("order: mock payments disabled")
 )
 
 type Address struct {

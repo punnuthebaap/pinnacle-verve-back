@@ -182,15 +182,17 @@ func (s *Service) Related(ctx context.Context, slug string) ([]store.ListRelated
 
 // Option mirrors products.options JSON.
 type Option struct {
-	Code   string `json:"code"`
-	Name   string `json:"name"`
-	Kind   string `json:"kind"`
-	Values []struct {
-		Code      string `json:"code"`
-		Label     string `json:"label"`
-		Detail    string `json:"detail,omitempty"`
-		SwatchHex string `json:"swatchHex,omitempty"`
-	} `json:"values"`
+	Code   string        `json:"code"`
+	Name   string        `json:"name"`
+	Kind   string        `json:"kind"`
+	Values []OptionValue `json:"values"`
+}
+
+type OptionValue struct {
+	Code      string `json:"code"`
+	Label     string `json:"label"`
+	Detail    string `json:"detail,omitempty"`
+	SwatchHex string `json:"swatchHex,omitempty"`
 }
 
 // VariantLabel renders a variant's option values in product option order, e.g.

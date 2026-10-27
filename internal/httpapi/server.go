@@ -13,19 +13,21 @@ import (
 	"github.com/pinnacleverve/api/internal/api"
 	"github.com/pinnacleverve/api/internal/cart"
 	"github.com/pinnacleverve/api/internal/catalog"
+	"github.com/pinnacleverve/api/internal/catalogadmin"
 	"github.com/pinnacleverve/api/internal/order"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
 	"github.com/pinnacleverve/api/internal/store"
 )
 
 type Server struct {
-	Pool    *pgxpool.Pool
-	Q       *store.Queries
-	Catalog *catalog.Service
-	Cart    *cart.Service
-	Orders  *order.Service
-	Admin   *admin.Service
-	Log     *slog.Logger
+	Pool         *pgxpool.Pool
+	Q            *store.Queries
+	Catalog      *catalog.Service
+	Cart         *cart.Service
+	Orders       *order.Service
+	Admin        *admin.Service
+	CatalogAdmin *catalogadmin.Service
+	Log          *slog.Logger
 }
 
 var _ api.StrictServerInterface = (*Server)(nil)

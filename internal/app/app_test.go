@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -23,9 +24,10 @@ import (
 
 // stack is a freshly seeded API backed by a real Postgres (integration tests run serially).
 type stack struct {
-	app  *App
-	pool *pgxpool.Pool
-	c    *client
+	app         *App
+	pool        *pgxpool.Pool
+	c           *client
+	revalidated *atomic.Int32 // storefront revalidation calls received
 }
 
 // newStack uses TEST_DATABASE_URL (default: local dev cluster, database pinnacle_test, created if missing).
@@ -52,6 +54,15 @@ func newStack(t *testing.T) *stack {
 	}
 	cfg, _ := config.Load()
 	cfg.DatabaseURL = url
+	// Stand-in storefront: counts authenticated revalidation calls.
+	var revalidated atomic.Int32
+	storefront := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Revalidate-Secret") == cfg.RevalidateSecret {
+			revalidated.Add(1)
+		}
+	}))
+	t.Cleanup(storefront.Close)
+	cfg.StorefrontRevalidateURL = storefront.URL
 	a, err := New(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pool)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +70,7 @@ func newStack(t *testing.T) *stack {
 	srv := httptest.NewServer(a.Handler)
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
-	return &stack{app: a, pool: pool, c: &client{t: t, base: srv.URL + "/api/v1", origin: "http://localhost:3000", http: &http.Client{Jar: jar}}}
+	return &stack{app: a, pool: pool, revalidated: &revalidated, c: &client{t: t, base: srv.URL + "/api/v1", origin: "http://localhost:3000", http: &http.Client{Jar: jar}}}
 }
 
 var checkoutBody = map[string]any{
@@ -153,7 +164,7 @@ func TestPurchaseJourney(t *testing.T) {
 
 	var list struct {
 		Items []struct{ Slug string } `json:"items"`
-		Total int                    `json:"total"`
+		Total int                     `json:"total"`
 	}
 	c.do("GET", "/products?category=mirrors&pageSize=48", "", nil, 200, &list)
 	if list.Total != 8 {

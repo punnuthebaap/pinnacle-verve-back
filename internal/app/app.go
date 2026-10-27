@@ -15,6 +15,7 @@ import (
 	"github.com/pinnacleverve/api/internal/api"
 	"github.com/pinnacleverve/api/internal/cart"
 	"github.com/pinnacleverve/api/internal/catalog"
+	"github.com/pinnacleverve/api/internal/catalogadmin"
 	"github.com/pinnacleverve/api/internal/httpapi"
 	"github.com/pinnacleverve/api/internal/order"
 	"github.com/pinnacleverve/api/internal/payment"
@@ -59,6 +60,8 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		Admin:   admin.NewService(q, log),
 		Log:     log,
 	}
+	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin,
+		catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log})
 
 	spec, err := api.GetSwagger()
 	if err != nil {

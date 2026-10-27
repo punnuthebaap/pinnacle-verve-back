@@ -28,7 +28,9 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 ## Admin panel (decisions D32–D35)
 
 - ✅ A1 backend: admin users/roles/sessions/audit (migration 00004), `/api/v1/admin` session + users + audit endpoints, `cmd/admin create-owner`. Test `TestAdminAuth`.
-- ⬜ A1 frontend (sign-in, shell, users, audit) → A2 catalogue CRUD + image upload → A3 orders ops → A4 settings → A5 reviews/newsletter → A6 content.
+- ✅ A1 frontend (storefront PR #8).
+- ✅ A2a catalogue API: categories + filters, products (all content fields), variants (validated options, SKU/combination uniqueness, deactivate-not-delete), filter values, pairings; audit in the same transaction; storefront revalidation after each write. Test `TestAdminCatalog`.
+- ⬜ A2b image upload (storage interface) → A3 orders → A4 settings → A5 reviews/newsletter → A6 content.
 
 ## Known issues / gaps
 
@@ -44,6 +46,6 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. A2 catalogue admin API (categories, facets, products, variants, images via storage interface, relations).
+1. A2b image upload: `internal/storage` (local disk now), `POST/PATCH/DELETE /admin/products/{id}/images`, `/media/*` serving, larger body cap for uploads.
 2. Move the gateway order call after commit (with retry) before Razorpay goes live.
 3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

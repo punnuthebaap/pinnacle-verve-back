@@ -20,6 +20,7 @@ import (
 	"github.com/pinnacleverve/api/internal/catalogadmin"
 	"github.com/pinnacleverve/api/internal/httpapi"
 	"github.com/pinnacleverve/api/internal/order"
+	"github.com/pinnacleverve/api/internal/orderadmin"
 	"github.com/pinnacleverve/api/internal/payment"
 	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
@@ -71,6 +72,7 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		Admin:   admin.NewService(q, log),
 		Log:     log,
 	}
+	srv.OrderAdmin = orderadmin.NewService(pool, q, srv.Admin)
 	media := storage.Local{Dir: cfg.MediaDir, URLPrefix: "/media"}
 	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin,
 		catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log}, media)

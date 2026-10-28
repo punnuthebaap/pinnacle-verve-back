@@ -22,7 +22,7 @@ func (q *Queries) ExpireOrderPayments(ctx context.Context, orderID uuid.UUID) er
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at FROM orders WHERE id = $1
+SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at, tracking_carrier, tracking_number FROM orders WHERE id = $1
 `
 
 func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error) {
@@ -49,12 +49,14 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 		&i.TotalPaise,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TrackingCarrier,
+		&i.TrackingNumber,
 	)
 	return i, err
 }
 
 const getOrderByRefForSession = `-- name: GetOrderByRefForSession :one
-SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at FROM orders WHERE ref = $1 AND session_id = $2
+SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at, tracking_carrier, tracking_number FROM orders WHERE ref = $1 AND session_id = $2
 `
 
 type GetOrderByRefForSessionParams struct {
@@ -86,6 +88,8 @@ func (q *Queries) GetOrderByRefForSession(ctx context.Context, arg GetOrderByRef
 		&i.TotalPaise,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TrackingCarrier,
+		&i.TrackingNumber,
 	)
 	return i, err
 }

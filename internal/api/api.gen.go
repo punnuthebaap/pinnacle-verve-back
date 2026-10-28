@@ -25,6 +25,78 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AdminOrderPaymentStatus.
+const (
+	AdminOrderPaymentStatusCaptured AdminOrderPaymentStatus = "captured"
+	AdminOrderPaymentStatusCreated  AdminOrderPaymentStatus = "created"
+	AdminOrderPaymentStatusExpired  AdminOrderPaymentStatus = "expired"
+	AdminOrderPaymentStatusFailed   AdminOrderPaymentStatus = "failed"
+)
+
+// Valid indicates whether the value is a known member of the AdminOrderPaymentStatus enum.
+func (e AdminOrderPaymentStatus) Valid() bool {
+	switch e {
+	case AdminOrderPaymentStatusCaptured:
+		return true
+	case AdminOrderPaymentStatusCreated:
+		return true
+	case AdminOrderPaymentStatusExpired:
+		return true
+	case AdminOrderPaymentStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminOrderSummaryPaymentStatus.
+const (
+	AdminOrderSummaryPaymentStatusExpired  AdminOrderSummaryPaymentStatus = "expired"
+	AdminOrderSummaryPaymentStatusFailed   AdminOrderSummaryPaymentStatus = "failed"
+	AdminOrderSummaryPaymentStatusPaid     AdminOrderSummaryPaymentStatus = "paid"
+	AdminOrderSummaryPaymentStatusPending  AdminOrderSummaryPaymentStatus = "pending"
+	AdminOrderSummaryPaymentStatusRefunded AdminOrderSummaryPaymentStatus = "refunded"
+)
+
+// Valid indicates whether the value is a known member of the AdminOrderSummaryPaymentStatus enum.
+func (e AdminOrderSummaryPaymentStatus) Valid() bool {
+	switch e {
+	case AdminOrderSummaryPaymentStatusExpired:
+		return true
+	case AdminOrderSummaryPaymentStatusFailed:
+		return true
+	case AdminOrderSummaryPaymentStatusPaid:
+		return true
+	case AdminOrderSummaryPaymentStatusPending:
+		return true
+	case AdminOrderSummaryPaymentStatusRefunded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminOrderSummaryStatus.
+const (
+	AdminOrderSummaryStatusCancelled      AdminOrderSummaryStatus = "cancelled"
+	AdminOrderSummaryStatusPendingPayment AdminOrderSummaryStatus = "pending_payment"
+	AdminOrderSummaryStatusPlaced         AdminOrderSummaryStatus = "placed"
+)
+
+// Valid indicates whether the value is a known member of the AdminOrderSummaryStatus enum.
+func (e AdminOrderSummaryStatus) Valid() bool {
+	switch e {
+	case AdminOrderSummaryStatusCancelled:
+		return true
+	case AdminOrderSummaryStatusPendingPayment:
+		return true
+	case AdminOrderSummaryStatusPlaced:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AdminRole.
 const (
 	Catalog AdminRole = "catalog"
@@ -112,6 +184,33 @@ func (e FacetDefinitionKind) Valid() bool {
 	}
 }
 
+// Defines values for FulfilmentStatus.
+const (
+	FulfilmentStatusDelivered   FulfilmentStatus = "delivered"
+	FulfilmentStatusInTransit   FulfilmentStatus = "in_transit"
+	FulfilmentStatusInstalled   FulfilmentStatus = "installed"
+	FulfilmentStatusPreparing   FulfilmentStatus = "preparing"
+	FulfilmentStatusUnfulfilled FulfilmentStatus = "unfulfilled"
+)
+
+// Valid indicates whether the value is a known member of the FulfilmentStatus enum.
+func (e FulfilmentStatus) Valid() bool {
+	switch e {
+	case FulfilmentStatusDelivered:
+		return true
+	case FulfilmentStatusInTransit:
+		return true
+	case FulfilmentStatusInstalled:
+		return true
+	case FulfilmentStatusPreparing:
+		return true
+	case FulfilmentStatusUnfulfilled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	Ok HealthStatus = "ok"
@@ -127,54 +226,27 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
-// Defines values for OrderFulfilmentStatus.
-const (
-	Delivered   OrderFulfilmentStatus = "delivered"
-	InTransit   OrderFulfilmentStatus = "in_transit"
-	Installed   OrderFulfilmentStatus = "installed"
-	Preparing   OrderFulfilmentStatus = "preparing"
-	Unfulfilled OrderFulfilmentStatus = "unfulfilled"
-)
-
-// Valid indicates whether the value is a known member of the OrderFulfilmentStatus enum.
-func (e OrderFulfilmentStatus) Valid() bool {
-	switch e {
-	case Delivered:
-		return true
-	case InTransit:
-		return true
-	case Installed:
-		return true
-	case Preparing:
-		return true
-	case Unfulfilled:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for OrderPaymentStatus.
 const (
-	Expired  OrderPaymentStatus = "expired"
-	Failed   OrderPaymentStatus = "failed"
-	Paid     OrderPaymentStatus = "paid"
-	Pending  OrderPaymentStatus = "pending"
-	Refunded OrderPaymentStatus = "refunded"
+	OrderPaymentStatusExpired  OrderPaymentStatus = "expired"
+	OrderPaymentStatusFailed   OrderPaymentStatus = "failed"
+	OrderPaymentStatusPaid     OrderPaymentStatus = "paid"
+	OrderPaymentStatusPending  OrderPaymentStatus = "pending"
+	OrderPaymentStatusRefunded OrderPaymentStatus = "refunded"
 )
 
 // Valid indicates whether the value is a known member of the OrderPaymentStatus enum.
 func (e OrderPaymentStatus) Valid() bool {
 	switch e {
-	case Expired:
+	case OrderPaymentStatusExpired:
 		return true
-	case Failed:
+	case OrderPaymentStatusFailed:
 		return true
-	case Paid:
+	case OrderPaymentStatusPaid:
 		return true
-	case Pending:
+	case OrderPaymentStatusPending:
 		return true
-	case Refunded:
+	case OrderPaymentStatusRefunded:
 		return true
 	default:
 		return false
@@ -183,19 +255,40 @@ func (e OrderPaymentStatus) Valid() bool {
 
 // Defines values for OrderStatus.
 const (
-	Cancelled      OrderStatus = "cancelled"
-	PendingPayment OrderStatus = "pending_payment"
-	Placed         OrderStatus = "placed"
+	OrderStatusCancelled      OrderStatus = "cancelled"
+	OrderStatusPendingPayment OrderStatus = "pending_payment"
+	OrderStatusPlaced         OrderStatus = "placed"
 )
 
 // Valid indicates whether the value is a known member of the OrderStatus enum.
 func (e OrderStatus) Valid() bool {
 	switch e {
-	case Cancelled:
+	case OrderStatusCancelled:
 		return true
-	case PendingPayment:
+	case OrderStatusPendingPayment:
 		return true
-	case Placed:
+	case OrderStatusPlaced:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrderAttention.
+const (
+	AmountMismatch OrderAttention = "amount_mismatch"
+	LateCapture    OrderAttention = "late_capture"
+	RefundDue      OrderAttention = "refund_due"
+)
+
+// Valid indicates whether the value is a known member of the OrderAttention enum.
+func (e OrderAttention) Valid() bool {
+	switch e {
+	case AmountMismatch:
+		return true
+	case LateCapture:
+		return true
+	case RefundDue:
 		return true
 	default:
 		return false
@@ -274,6 +367,96 @@ func (e ProductOptionKind) Valid() bool {
 	case ProductOptionKindChip:
 		return true
 	case ProductOptionKindSwatch:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminListOrdersParamsQueue.
+const (
+	Attention AdminListOrdersParamsQueue = "attention"
+	ToFulfil  AdminListOrdersParamsQueue = "to_fulfil"
+)
+
+// Valid indicates whether the value is a known member of the AdminListOrdersParamsQueue enum.
+func (e AdminListOrdersParamsQueue) Valid() bool {
+	switch e {
+	case Attention:
+		return true
+	case ToFulfil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminListOrdersParamsStatus.
+const (
+	AdminListOrdersParamsStatusCancelled      AdminListOrdersParamsStatus = "cancelled"
+	AdminListOrdersParamsStatusPendingPayment AdminListOrdersParamsStatus = "pending_payment"
+	AdminListOrdersParamsStatusPlaced         AdminListOrdersParamsStatus = "placed"
+)
+
+// Valid indicates whether the value is a known member of the AdminListOrdersParamsStatus enum.
+func (e AdminListOrdersParamsStatus) Valid() bool {
+	switch e {
+	case AdminListOrdersParamsStatusCancelled:
+		return true
+	case AdminListOrdersParamsStatusPendingPayment:
+		return true
+	case AdminListOrdersParamsStatusPlaced:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminListOrdersParamsPaymentStatus.
+const (
+	AdminListOrdersParamsPaymentStatusExpired  AdminListOrdersParamsPaymentStatus = "expired"
+	AdminListOrdersParamsPaymentStatusFailed   AdminListOrdersParamsPaymentStatus = "failed"
+	AdminListOrdersParamsPaymentStatusPaid     AdminListOrdersParamsPaymentStatus = "paid"
+	AdminListOrdersParamsPaymentStatusPending  AdminListOrdersParamsPaymentStatus = "pending"
+	AdminListOrdersParamsPaymentStatusRefunded AdminListOrdersParamsPaymentStatus = "refunded"
+)
+
+// Valid indicates whether the value is a known member of the AdminListOrdersParamsPaymentStatus enum.
+func (e AdminListOrdersParamsPaymentStatus) Valid() bool {
+	switch e {
+	case AdminListOrdersParamsPaymentStatusExpired:
+		return true
+	case AdminListOrdersParamsPaymentStatusFailed:
+		return true
+	case AdminListOrdersParamsPaymentStatusPaid:
+		return true
+	case AdminListOrdersParamsPaymentStatusPending:
+		return true
+	case AdminListOrdersParamsPaymentStatusRefunded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminSetFulfilmentJSONBodyStatus.
+const (
+	AdminSetFulfilmentJSONBodyStatusDelivered AdminSetFulfilmentJSONBodyStatus = "delivered"
+	AdminSetFulfilmentJSONBodyStatusInTransit AdminSetFulfilmentJSONBodyStatus = "in_transit"
+	AdminSetFulfilmentJSONBodyStatusInstalled AdminSetFulfilmentJSONBodyStatus = "installed"
+	AdminSetFulfilmentJSONBodyStatusPreparing AdminSetFulfilmentJSONBodyStatus = "preparing"
+)
+
+// Valid indicates whether the value is a known member of the AdminSetFulfilmentJSONBodyStatus enum.
+func (e AdminSetFulfilmentJSONBodyStatus) Valid() bool {
+	switch e {
+	case AdminSetFulfilmentJSONBodyStatusDelivered:
+		return true
+	case AdminSetFulfilmentJSONBodyStatusInTransit:
+		return true
+	case AdminSetFulfilmentJSONBodyStatusInstalled:
+		return true
+	case AdminSetFulfilmentJSONBodyStatusPreparing:
 		return true
 	default:
 		return false
@@ -416,6 +599,75 @@ type AdminLoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+// AdminOrder defines model for AdminOrder.
+type AdminOrder struct {
+	// Attention Money was taken but the order isn't going ahead. refund_due = paid then cancelled; late_capture = paid after the order expired (reinstate or refund); amount_mismatch = the gateway captured a different amount.
+	Attention *OrderAttention   `json:"attention,omitempty"`
+	Events    []AdminOrderEvent `json:"events"`
+	Order     Order             `json:"order"`
+	Payment   struct {
+		// AmountPaise Amount in paise (₹1 = 100).
+		AmountPaise       Paise                   `json:"amountPaise"`
+		Provider          string                  `json:"provider"`
+		ProviderOrderId   string                  `json:"providerOrderId"`
+		ProviderPaymentId string                  `json:"providerPaymentId"`
+		Status            AdminOrderPaymentStatus `json:"status"`
+	} `json:"payment"`
+}
+
+// AdminOrderPaymentStatus defines model for AdminOrder.Payment.Status.
+type AdminOrderPaymentStatus string
+
+// AdminOrderEvent defines model for AdminOrderEvent.
+type AdminOrderEvent struct {
+	// AdminName Staff member who made the change; absent for system events.
+	AdminName *string                `json:"adminName,omitempty"`
+	CreatedAt time.Time              `json:"createdAt"`
+	Data      map[string]interface{} `json:"data"`
+	Id        int64                  `json:"id"`
+
+	// Type e.g. order_created, payment_captured, fulfilment_in_transit, order_cancelled, refund_recorded, note
+	Type string `json:"type"`
+}
+
+// AdminOrderPage defines model for AdminOrderPage.
+type AdminOrderPage struct {
+	// Counts Totals across all orders, for the queue tabs.
+	Counts struct {
+		Attention int `json:"attention"`
+		ToFulfil  int `json:"toFulfil"`
+	} `json:"counts"`
+	Items []AdminOrderSummary `json:"items"`
+	Page  int                 `json:"page"`
+	Total int                 `json:"total"`
+}
+
+// AdminOrderSummary defines model for AdminOrderSummary.
+type AdminOrderSummary struct {
+	// Attention Money was taken but the order isn't going ahead. refund_due = paid then cancelled; late_capture = paid after the order expired (reinstate or refund); amount_mismatch = the gateway captured a different amount.
+	Attention        *OrderAttention                `json:"attention,omitempty"`
+	City             string                         `json:"city"`
+	CreatedAt        time.Time                      `json:"createdAt"`
+	CustomerName     string                         `json:"customerName"`
+	Email            string                         `json:"email"`
+	FulfilmentStatus FulfilmentStatus               `json:"fulfilmentStatus"`
+	ItemCount        int                            `json:"itemCount"`
+	PaymentMethod    PaymentMethod                  `json:"paymentMethod"`
+	PaymentStatus    AdminOrderSummaryPaymentStatus `json:"paymentStatus"`
+	Phone            string                         `json:"phone"`
+	Ref              string                         `json:"ref"`
+	Status           AdminOrderSummaryStatus        `json:"status"`
+
+	// TotalPaise Amount in paise (₹1 = 100).
+	TotalPaise Paise `json:"totalPaise"`
+}
+
+// AdminOrderSummaryPaymentStatus defines model for AdminOrderSummary.PaymentStatus.
+type AdminOrderSummaryPaymentStatus string
+
+// AdminOrderSummaryStatus defines model for AdminOrderSummary.Status.
+type AdminOrderSummaryStatus string
 
 // AdminProduct defines model for AdminProduct.
 type AdminProduct struct {
@@ -703,6 +955,9 @@ type FacetValue struct {
 	Value     string  `json:"value"`
 }
 
+// FulfilmentStatus defines model for FulfilmentStatus.
+type FulfilmentStatus string
+
 // Health defines model for Health.
 type Health struct {
 	Status HealthStatus `json:"status"`
@@ -719,31 +974,32 @@ type Image struct {
 
 // Order defines model for Order.
 type Order struct {
-	Addons           []Addon               `json:"addons"`
-	CreatedAt        time.Time             `json:"createdAt"`
-	Email            string                `json:"email"`
-	FulfilmentStatus OrderFulfilmentStatus `json:"fulfilmentStatus"`
-	Gstin            *string               `json:"gstin,omitempty"`
-	Items            []OrderItem           `json:"items"`
-	Notes            *string               `json:"notes,omitempty"`
-	PaymentMethod    PaymentMethod         `json:"paymentMethod"`
+	Addons           []Addon          `json:"addons"`
+	CreatedAt        time.Time        `json:"createdAt"`
+	Email            string           `json:"email"`
+	FulfilmentStatus FulfilmentStatus `json:"fulfilmentStatus"`
+	Gstin            *string          `json:"gstin,omitempty"`
+	Items            []OrderItem      `json:"items"`
+	Notes            *string          `json:"notes,omitempty"`
+	PaymentMethod    PaymentMethod    `json:"paymentMethod"`
 
-	// PaymentStatus expired = not paid within the reservation window; stock was released.
+	// PaymentStatus expired = no longer payable (the reservation window lapsed or the order was cancelled before payment); stock was released.
 	PaymentStatus   OrderPaymentStatus `json:"paymentStatus"`
 	Ref             string             `json:"ref"`
 	ShippingAddress Address            `json:"shippingAddress"`
 	Status          OrderStatus        `json:"status"`
 	Totals          Totals             `json:"totals"`
+	Tracking        *Tracking          `json:"tracking,omitempty"`
 }
 
-// OrderFulfilmentStatus defines model for Order.FulfilmentStatus.
-type OrderFulfilmentStatus string
-
-// OrderPaymentStatus expired = not paid within the reservation window; stock was released.
+// OrderPaymentStatus expired = no longer payable (the reservation window lapsed or the order was cancelled before payment); stock was released.
 type OrderPaymentStatus string
 
 // OrderStatus defines model for Order.Status.
 type OrderStatus string
+
+// OrderAttention Money was taken but the order isn't going ahead. refund_due = paid then cancelled; late_capture = paid after the order expired (reinstate or refund); amount_mismatch = the gateway captured a different amount.
+type OrderAttention string
 
 // OrderCreated defines model for OrderCreated.
 type OrderCreated struct {
@@ -983,6 +1239,12 @@ type Totals struct {
 	TotalPaise Paise `json:"totalPaise"`
 }
 
+// Tracking defines model for Tracking.
+type Tracking struct {
+	Carrier string `json:"carrier"`
+	Number  string `json:"number"`
+}
+
 // UpdateAdminRequest defines model for UpdateAdminRequest.
 type UpdateAdminRequest struct {
 	IsActive *bool   `json:"isActive,omitempty"`
@@ -1040,6 +1302,54 @@ type AdminListAuditParams struct {
 // AdminSetCategoryFacetsJSONBody defines parameters for AdminSetCategoryFacets.
 type AdminSetCategoryFacetsJSONBody struct {
 	Facets []FacetDefinition `json:"facets"`
+}
+
+// AdminListOrdersParams defines parameters for AdminListOrders.
+type AdminListOrdersParams struct {
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// Queue to_fulfil = paid and not yet dispatched; attention = money to refund or a payment to resolve.
+	Queue            *AdminListOrdersParamsQueue         `form:"queue,omitempty" json:"queue,omitempty"`
+	Status           *AdminListOrdersParamsStatus        `form:"status,omitempty" json:"status,omitempty"`
+	PaymentStatus    *AdminListOrdersParamsPaymentStatus `form:"paymentStatus,omitempty" json:"paymentStatus,omitempty"`
+	FulfilmentStatus *FulfilmentStatus                   `form:"fulfilmentStatus,omitempty" json:"fulfilmentStatus,omitempty"`
+	Page             *int                                `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// AdminListOrdersParamsQueue defines parameters for AdminListOrders.
+type AdminListOrdersParamsQueue string
+
+// AdminListOrdersParamsStatus defines parameters for AdminListOrders.
+type AdminListOrdersParamsStatus string
+
+// AdminListOrdersParamsPaymentStatus defines parameters for AdminListOrders.
+type AdminListOrdersParamsPaymentStatus string
+
+// AdminCancelOrderJSONBody defines parameters for AdminCancelOrder.
+type AdminCancelOrderJSONBody struct {
+	Reason string `json:"reason"`
+}
+
+// AdminSetFulfilmentJSONBody defines parameters for AdminSetFulfilment.
+type AdminSetFulfilmentJSONBody struct {
+	Carrier        *string                          `json:"carrier,omitempty"`
+	Note           *string                          `json:"note,omitempty"`
+	Status         AdminSetFulfilmentJSONBodyStatus `json:"status"`
+	TrackingNumber *string                          `json:"trackingNumber,omitempty"`
+}
+
+// AdminSetFulfilmentJSONBodyStatus defines parameters for AdminSetFulfilment.
+type AdminSetFulfilmentJSONBodyStatus string
+
+// AdminAddOrderNoteJSONBody defines parameters for AdminAddOrderNote.
+type AdminAddOrderNoteJSONBody struct {
+	Text string `json:"text"`
+}
+
+// AdminRecordRefundJSONBody defines parameters for AdminRecordRefund.
+type AdminRecordRefundJSONBody struct {
+	Note      *string `json:"note,omitempty"`
+	Reference string  `json:"reference"`
 }
 
 // AdminListProductsParams defines parameters for AdminListProducts.
@@ -1143,6 +1453,18 @@ type AdminSetCategoryFacetsJSONRequestBody AdminSetCategoryFacetsJSONBody
 // AdminChangePasswordJSONRequestBody defines body for AdminChangePassword for application/json ContentType.
 type AdminChangePasswordJSONRequestBody = ChangePasswordRequest
 
+// AdminCancelOrderJSONRequestBody defines body for AdminCancelOrder for application/json ContentType.
+type AdminCancelOrderJSONRequestBody AdminCancelOrderJSONBody
+
+// AdminSetFulfilmentJSONRequestBody defines body for AdminSetFulfilment for application/json ContentType.
+type AdminSetFulfilmentJSONRequestBody AdminSetFulfilmentJSONBody
+
+// AdminAddOrderNoteJSONRequestBody defines body for AdminAddOrderNote for application/json ContentType.
+type AdminAddOrderNoteJSONRequestBody AdminAddOrderNoteJSONBody
+
+// AdminRecordRefundJSONRequestBody defines body for AdminRecordRefund for application/json ContentType.
+type AdminRecordRefundJSONRequestBody AdminRecordRefundJSONBody
+
 // AdminCreateProductJSONRequestBody defines body for AdminCreateProduct for application/json ContentType.
 type AdminCreateProductJSONRequestBody = AdminProductInput
 
@@ -1220,6 +1542,27 @@ type ServerInterface interface {
 
 	// (PUT /admin/me/password)
 	AdminChangePassword(w http.ResponseWriter, r *http.Request)
+
+	// (GET /admin/orders)
+	AdminListOrders(w http.ResponseWriter, r *http.Request, params AdminListOrdersParams)
+
+	// (GET /admin/orders/{ref})
+	AdminGetOrder(w http.ResponseWriter, r *http.Request, ref string)
+
+	// (POST /admin/orders/{ref}/cancel)
+	AdminCancelOrder(w http.ResponseWriter, r *http.Request, ref string)
+
+	// (POST /admin/orders/{ref}/fulfilment)
+	AdminSetFulfilment(w http.ResponseWriter, r *http.Request, ref string)
+
+	// (POST /admin/orders/{ref}/notes)
+	AdminAddOrderNote(w http.ResponseWriter, r *http.Request, ref string)
+
+	// (POST /admin/orders/{ref}/refund)
+	AdminRecordRefund(w http.ResponseWriter, r *http.Request, ref string)
+
+	// (POST /admin/orders/{ref}/reinstate)
+	AdminReinstateOrder(w http.ResponseWriter, r *http.Request, ref string)
 
 	// (GET /admin/products)
 	AdminListProducts(w http.ResponseWriter, r *http.Request, params AdminListProductsParams)
@@ -1476,6 +1819,260 @@ func (siw *ServerInterfaceWrapper) AdminChangePassword(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdminChangePassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminListOrders operation middleware
+func (siw *ServerInterfaceWrapper) AdminListOrders(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AdminListOrdersParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "queue" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "queue", r.URL.Query(), &params.Queue, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "queue"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "queue", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "paymentStatus" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "paymentStatus", r.URL.Query(), &params.PaymentStatus, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "paymentStatus"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "paymentStatus", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "fulfilmentStatus" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "fulfilmentStatus", r.URL.Query(), &params.FulfilmentStatus, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "fulfilmentStatus"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fulfilmentStatus", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminListOrders(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminGetOrder operation middleware
+func (siw *ServerInterfaceWrapper) AdminGetOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminGetOrder(w, r, ref)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminCancelOrder operation middleware
+func (siw *ServerInterfaceWrapper) AdminCancelOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminCancelOrder(w, r, ref)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminSetFulfilment operation middleware
+func (siw *ServerInterfaceWrapper) AdminSetFulfilment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminSetFulfilment(w, r, ref)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminAddOrderNote operation middleware
+func (siw *ServerInterfaceWrapper) AdminAddOrderNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminAddOrderNote(w, r, ref)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminRecordRefund operation middleware
+func (siw *ServerInterfaceWrapper) AdminRecordRefund(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminRecordRefund(w, r, ref)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdminReinstateOrder operation middleware
+func (siw *ServerInterfaceWrapper) AdminReinstateOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ref" -------------
+	var ref string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ref", r.PathValue("ref"), &ref, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdminReinstateOrder(w, r, ref)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2577,9 +3174,18 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/products/{id}/images", wrapper.AdminUploadImage)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/admin/products/{id}/images", wrapper.AdminSetImages)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/admin/products/{id}/images/{imageId}", wrapper.AdminDeleteImage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/orders", wrapper.AdminListOrders)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/admin/orders/{ref}", wrapper.AdminGetOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/orders/{ref}/fulfilment", wrapper.AdminSetFulfilment)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/orders/{ref}/cancel", wrapper.AdminCancelOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/orders/{ref}/refund", wrapper.AdminRecordRefund)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/orders/{ref}/reinstate", wrapper.AdminReinstateOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/admin/orders/{ref}/notes", wrapper.AdminAddOrderNote)
 
 	return m
 }
+
+type AdminOrderJSONResponse AdminOrder
 
 type AdminProductJSONResponse AdminProduct
 
@@ -2945,6 +3551,430 @@ func (response AdminChangePassword401ApplicationProblemPlusJSONResponse) VisitAd
 type AdminChangePassword422ApplicationProblemPlusJSONResponse Problem
 
 func (response AdminChangePassword422ApplicationProblemPlusJSONResponse) VisitAdminChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListOrdersRequestObject struct {
+	Params AdminListOrdersParams
+}
+
+type AdminListOrdersResponseObject interface {
+	VisitAdminListOrdersResponse(w http.ResponseWriter) error
+}
+
+type AdminListOrders200JSONResponse AdminOrderPage
+
+func (response AdminListOrders200JSONResponse) VisitAdminListOrdersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminListOrders403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminListOrders403ApplicationProblemPlusJSONResponse) VisitAdminListOrdersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetOrderRequestObject struct {
+	Ref string `json:"ref"`
+}
+
+type AdminGetOrderResponseObject interface {
+	VisitAdminGetOrderResponse(w http.ResponseWriter) error
+}
+
+type AdminGetOrder200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminGetOrder200JSONResponse) VisitAdminGetOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetOrder403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminGetOrder403ApplicationProblemPlusJSONResponse) VisitAdminGetOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminGetOrder404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminGetOrder404ApplicationProblemPlusJSONResponse) VisitAdminGetOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCancelOrderRequestObject struct {
+	Ref  string `json:"ref"`
+	Body *AdminCancelOrderJSONRequestBody
+}
+
+type AdminCancelOrderResponseObject interface {
+	VisitAdminCancelOrderResponse(w http.ResponseWriter) error
+}
+
+type AdminCancelOrder200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminCancelOrder200JSONResponse) VisitAdminCancelOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCancelOrder403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminCancelOrder403ApplicationProblemPlusJSONResponse) VisitAdminCancelOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCancelOrder404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminCancelOrder404ApplicationProblemPlusJSONResponse) VisitAdminCancelOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminCancelOrder422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminCancelOrder422ApplicationProblemPlusJSONResponse) VisitAdminCancelOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetFulfilmentRequestObject struct {
+	Ref  string `json:"ref"`
+	Body *AdminSetFulfilmentJSONRequestBody
+}
+
+type AdminSetFulfilmentResponseObject interface {
+	VisitAdminSetFulfilmentResponse(w http.ResponseWriter) error
+}
+
+type AdminSetFulfilment200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminSetFulfilment200JSONResponse) VisitAdminSetFulfilmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetFulfilment403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminSetFulfilment403ApplicationProblemPlusJSONResponse) VisitAdminSetFulfilmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetFulfilment404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetFulfilment404ApplicationProblemPlusJSONResponse) VisitAdminSetFulfilmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminSetFulfilment422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminSetFulfilment422ApplicationProblemPlusJSONResponse) VisitAdminSetFulfilmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminAddOrderNoteRequestObject struct {
+	Ref  string `json:"ref"`
+	Body *AdminAddOrderNoteJSONRequestBody
+}
+
+type AdminAddOrderNoteResponseObject interface {
+	VisitAdminAddOrderNoteResponse(w http.ResponseWriter) error
+}
+
+type AdminAddOrderNote200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminAddOrderNote200JSONResponse) VisitAdminAddOrderNoteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminAddOrderNote403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminAddOrderNote403ApplicationProblemPlusJSONResponse) VisitAdminAddOrderNoteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminAddOrderNote404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminAddOrderNote404ApplicationProblemPlusJSONResponse) VisitAdminAddOrderNoteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminAddOrderNote422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminAddOrderNote422ApplicationProblemPlusJSONResponse) VisitAdminAddOrderNoteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminRecordRefundRequestObject struct {
+	Ref  string `json:"ref"`
+	Body *AdminRecordRefundJSONRequestBody
+}
+
+type AdminRecordRefundResponseObject interface {
+	VisitAdminRecordRefundResponse(w http.ResponseWriter) error
+}
+
+type AdminRecordRefund200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminRecordRefund200JSONResponse) VisitAdminRecordRefundResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminRecordRefund403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminRecordRefund403ApplicationProblemPlusJSONResponse) VisitAdminRecordRefundResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminRecordRefund404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminRecordRefund404ApplicationProblemPlusJSONResponse) VisitAdminRecordRefundResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminRecordRefund422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminRecordRefund422ApplicationProblemPlusJSONResponse) VisitAdminRecordRefundResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminReinstateOrderRequestObject struct {
+	Ref string `json:"ref"`
+}
+
+type AdminReinstateOrderResponseObject interface {
+	VisitAdminReinstateOrderResponse(w http.ResponseWriter) error
+}
+
+type AdminReinstateOrder200JSONResponse struct{ AdminOrderJSONResponse }
+
+func (response AdminReinstateOrder200JSONResponse) VisitAdminReinstateOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminReinstateOrder403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AdminReinstateOrder403ApplicationProblemPlusJSONResponse) VisitAdminReinstateOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminReinstateOrder404ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminReinstateOrder404ApplicationProblemPlusJSONResponse) VisitAdminReinstateOrderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AdminReinstateOrder422ApplicationProblemPlusJSONResponse Problem
+
+func (response AdminReinstateOrder422ApplicationProblemPlusJSONResponse) VisitAdminReinstateOrderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -4542,6 +5572,27 @@ type StrictServerInterface interface {
 	// (PUT /admin/me/password)
 	AdminChangePassword(ctx context.Context, request AdminChangePasswordRequestObject) (AdminChangePasswordResponseObject, error)
 
+	// (GET /admin/orders)
+	AdminListOrders(ctx context.Context, request AdminListOrdersRequestObject) (AdminListOrdersResponseObject, error)
+
+	// (GET /admin/orders/{ref})
+	AdminGetOrder(ctx context.Context, request AdminGetOrderRequestObject) (AdminGetOrderResponseObject, error)
+
+	// (POST /admin/orders/{ref}/cancel)
+	AdminCancelOrder(ctx context.Context, request AdminCancelOrderRequestObject) (AdminCancelOrderResponseObject, error)
+
+	// (POST /admin/orders/{ref}/fulfilment)
+	AdminSetFulfilment(ctx context.Context, request AdminSetFulfilmentRequestObject) (AdminSetFulfilmentResponseObject, error)
+
+	// (POST /admin/orders/{ref}/notes)
+	AdminAddOrderNote(ctx context.Context, request AdminAddOrderNoteRequestObject) (AdminAddOrderNoteResponseObject, error)
+
+	// (POST /admin/orders/{ref}/refund)
+	AdminRecordRefund(ctx context.Context, request AdminRecordRefundRequestObject) (AdminRecordRefundResponseObject, error)
+
+	// (POST /admin/orders/{ref}/reinstate)
+	AdminReinstateOrder(ctx context.Context, request AdminReinstateOrderRequestObject) (AdminReinstateOrderResponseObject, error)
+
 	// (GET /admin/products)
 	AdminListProducts(ctx context.Context, request AdminListProductsRequestObject) (AdminListProductsResponseObject, error)
 
@@ -4900,6 +5951,216 @@ func (sh *strictHandler) AdminChangePassword(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AdminChangePasswordResponseObject); ok {
 		if err := validResponse.VisitAdminChangePasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminListOrders operation middleware
+func (sh *strictHandler) AdminListOrders(w http.ResponseWriter, r *http.Request, params AdminListOrdersParams) {
+	var request AdminListOrdersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminListOrders(ctx, request.(AdminListOrdersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminListOrders")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminListOrdersResponseObject); ok {
+		if err := validResponse.VisitAdminListOrdersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminGetOrder operation middleware
+func (sh *strictHandler) AdminGetOrder(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminGetOrderRequestObject
+
+	request.Ref = ref
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminGetOrder(ctx, request.(AdminGetOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminGetOrder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminGetOrderResponseObject); ok {
+		if err := validResponse.VisitAdminGetOrderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminCancelOrder operation middleware
+func (sh *strictHandler) AdminCancelOrder(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminCancelOrderRequestObject
+
+	request.Ref = ref
+
+	var body AdminCancelOrderJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminCancelOrder(ctx, request.(AdminCancelOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminCancelOrder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminCancelOrderResponseObject); ok {
+		if err := validResponse.VisitAdminCancelOrderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminSetFulfilment operation middleware
+func (sh *strictHandler) AdminSetFulfilment(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminSetFulfilmentRequestObject
+
+	request.Ref = ref
+
+	var body AdminSetFulfilmentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminSetFulfilment(ctx, request.(AdminSetFulfilmentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminSetFulfilment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminSetFulfilmentResponseObject); ok {
+		if err := validResponse.VisitAdminSetFulfilmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminAddOrderNote operation middleware
+func (sh *strictHandler) AdminAddOrderNote(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminAddOrderNoteRequestObject
+
+	request.Ref = ref
+
+	var body AdminAddOrderNoteJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminAddOrderNote(ctx, request.(AdminAddOrderNoteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminAddOrderNote")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminAddOrderNoteResponseObject); ok {
+		if err := validResponse.VisitAdminAddOrderNoteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminRecordRefund operation middleware
+func (sh *strictHandler) AdminRecordRefund(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminRecordRefundRequestObject
+
+	request.Ref = ref
+
+	var body AdminRecordRefundJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminRecordRefund(ctx, request.(AdminRecordRefundRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminRecordRefund")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminRecordRefundResponseObject); ok {
+		if err := validResponse.VisitAdminRecordRefundResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AdminReinstateOrder operation middleware
+func (sh *strictHandler) AdminReinstateOrder(w http.ResponseWriter, r *http.Request, ref string) {
+	var request AdminReinstateOrderRequestObject
+
+	request.Ref = ref
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AdminReinstateOrder(ctx, request.(AdminReinstateOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AdminReinstateOrder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AdminReinstateOrderResponseObject); ok {
+		if err := validResponse.VisitAdminReinstateOrderResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -5870,124 +7131,144 @@ func (sh *strictHandler) ListProductReviews(w http.ResponseWriter, r *http.Reque
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
+	"8FHX1dFZf2ROJ4TuVzL7TPH0q8//PwAA//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

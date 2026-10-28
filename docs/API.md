@@ -36,6 +36,13 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
 - **Images**: `POST /admin/products/{id}/images?alt=…` takes the raw file as the body (`application/octet-stream`; JPEG/PNG/WebP detected from the bytes, ≤ 10 MB, ≤ 12 per product) → `413 image_too_large` / `422 invalid`. `PUT …/images` reorders and edits alt text (must list every image once; first = listing image). `DELETE …/images/{imageId}` also deletes the stored file. Files are served at `/media/…` with immutable caching.
 - Bodies are capped at 1 MiB (10 MiB for image uploads) → `413 payload_too_large`.
 - After every successful catalogue write the API calls `STOREFRONT_REVALIDATE_URL` (header `X-Revalidate-Secret`) so cached storefront pages refresh immediately.
+- **Orders** (role `orders`): `GET /admin/orders?q&queue&status&paymentStatus&fulfilmentStatus&page` (newest first; `q` matches ref, email, phone or name; `queue=to_fulfil|attention`; response includes queue `counts`). `GET /admin/orders/{ref}` returns the order, payment, `attention` and the timeline (events carry `adminName` when staff made them). Actions, each returning the updated order or `422 invalid` with a message:
+  - `POST …/fulfilment {status, carrier?, trackingNumber?, note?}`: paid orders only; forward only (steps may be skipped); tracking from `in_transit` on, and can be corrected later. Shoppers see `tracking` on their order.
+  - `POST …/cancel {reason}`: not once dispatched. Releases stock. Unpaid → payment `expired` (a payment that still arrives is flagged as a late capture). Paid → `attention: refund_due`.
+  - `POST …/refund {reference, note?}`: records a **full** refund made in the gateway dashboard; only when the order needs one (`attention` set).
+  - `POST …/reinstate`: accepts a late capture (`attention: late_capture`) by re-reserving stock, all or nothing.
+  - `POST …/notes {text}`: internal timeline note.
+  - `attention` (view `order_attention`): `refund_due` | `late_capture` | `amount_mismatch` — money was taken but the order isn't going ahead.
 
 ## Payment flow (M1: mock provider)
 

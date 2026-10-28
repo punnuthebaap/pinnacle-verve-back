@@ -2,7 +2,7 @@
 //
 // Lifecycle: create → status=pending_payment, payment=pending, stock reserved.
 // Captured webhook → placed/paid, cart cleared. Failed webhook → cancelled/failed, stock released.
-// Fulfilment status advances independently (operations, M4).
+// Fulfilment status advances independently (admin operations, package orderadmin).
 package order
 
 import (
@@ -112,7 +112,7 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 	if err != nil {
 		return View{}, err
 	}
-	return s.load(ctx, s.q, orderID)
+	return Load(ctx, s.q, orderID)
 }
 
 func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idemKey string, in CreateInput) (uuid.UUID, error) {
@@ -200,10 +200,11 @@ func (s *Service) Get(ctx context.Context, ref string) (View, error) {
 	if err != nil {
 		return View{}, err
 	}
-	return s.load(ctx, s.q, o.ID)
+	return Load(ctx, s.q, o.ID)
 }
 
-func (s *Service) load(ctx context.Context, q *store.Queries, id uuid.UUID) (View, error) {
+// Load reads an order with its address, items, add-ons and latest payment (no access check).
+func Load(ctx context.Context, q *store.Queries, id uuid.UUID) (View, error) {
 	o, err := q.GetOrderByID(ctx, id)
 	if err != nil {
 		return View{}, err

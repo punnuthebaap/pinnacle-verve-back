@@ -115,6 +115,8 @@ type Order struct {
 	TotalPaise       int64
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	TrackingCarrier  string
+	TrackingNumber   string
 }
 
 type OrderAddon struct {
@@ -125,12 +127,18 @@ type OrderAddon struct {
 	PricePaise  int64
 }
 
+type OrderAttention struct {
+	OrderID uuid.UUID
+	Reason  string
+}
+
 type OrderEvent struct {
 	ID        int64
 	OrderID   uuid.UUID
 	Type      string
 	Data      json.RawMessage
 	CreatedAt pgtype.Timestamptz
+	AdminID   pgtype.UUID
 }
 
 type OrderItem struct {

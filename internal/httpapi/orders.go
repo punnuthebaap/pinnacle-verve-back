@@ -120,7 +120,7 @@ func CaptureWebhook(next http.Handler) http.Handler {
 func orderJSON(v order.View) api.Order {
 	o := api.Order{
 		Ref: v.Ref, Status: api.OrderStatus(v.Status), PaymentStatus: api.OrderPaymentStatus(v.PaymentStatus),
-		FulfilmentStatus: api.OrderFulfilmentStatus(v.FulfilmentStatus), CreatedAt: v.CreatedAt.Time,
+		FulfilmentStatus: api.FulfilmentStatus(v.FulfilmentStatus), CreatedAt: v.CreatedAt.Time,
 		Email: v.Email, Gstin: nonEmpty(v.Gstin), Notes: nonEmpty(v.Notes),
 		PaymentMethod: api.PaymentMethod(v.PaymentMethod),
 		ShippingAddress: api.Address{
@@ -129,6 +129,9 @@ func orderJSON(v order.View) api.Order {
 		},
 		Totals: totalsJSON(v.SubtotalPaise, v.DiscountPaise, v.ShippingPaise, v.AddonsPaise, v.TaxPaise, v.TotalPaise),
 		Items:  make([]api.OrderItem, 0, len(v.Items)), Addons: make([]api.Addon, 0, len(v.Addons)),
+	}
+	if v.TrackingCarrier != "" || v.TrackingNumber != "" {
+		o.Tracking = &api.Tracking{Carrier: v.TrackingCarrier, Number: v.TrackingNumber}
 	}
 	for _, i := range v.Items {
 		o.Items = append(o.Items, api.OrderItem{

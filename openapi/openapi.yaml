@@ -839,6 +839,185 @@ paths:
         "404": { $ref: "#/components/responses/Problem" }
 
 
+  /admin/orders:
+    get:
+      tags: [admin]
+      operationId: adminListOrders
+      description: Orders role. Newest first, 25 per page. q matches ref, email, phone or customer name.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 80 }
+        - name: queue
+          in: query
+          description: "to_fulfil = paid and not yet dispatched; attention = money to refund or a payment to resolve."
+          schema: { type: string, enum: [to_fulfil, attention] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending_payment, placed, cancelled] }
+        - name: paymentStatus
+          in: query
+          schema: { type: string, enum: [pending, paid, failed, expired, refunded] }
+        - name: fulfilmentStatus
+          in: query
+          schema: { $ref: "#/components/schemas/FulfilmentStatus" }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOrderPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    get:
+      tags: [admin]
+      operationId: adminGetOrder
+      security: [{ adminSession: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}/fulfilment:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    post:
+      tags: [admin]
+      operationId: adminSetFulfilment
+      description: "Move a paid order forward (steps may be skipped, never reversed). Tracking can be added or corrected once in transit."
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status: { type: string, enum: [preparing, in_transit, delivered, installed] }
+                carrier: { type: string, maxLength: 80 }
+                trackingNumber: { type: string, maxLength: 80 }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}/cancel:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    post:
+      tags: [admin]
+      operationId: adminCancelOrder
+      description: "Cancel an order that hasn't been dispatched; stock is released. A paid order then shows as refund due."
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              additionalProperties: false
+              properties:
+                reason: { type: string, minLength: 3, maxLength: 500 }
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}/refund:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    post:
+      tags: [admin]
+      operationId: adminRecordRefund
+      description: "Record a full refund issued in the payment gateway's dashboard (gateway refunds arrive with B1)."
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reference]
+              additionalProperties: false
+              properties:
+                reference: { type: string, minLength: 3, maxLength: 120 }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}/reinstate:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    post:
+      tags: [admin]
+      operationId: adminReinstateOrder
+      description: "Accept a payment captured after the order expired: re-reserves stock (all or nothing) and places the order."
+      security: [{ adminSession: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/orders/{ref}/notes:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema: { type: string, pattern: "^PV-[A-Z0-9]{6,12}$" }
+    post:
+      tags: [admin]
+      operationId: adminAddOrderNote
+      description: "Internal note on the order timeline; never shown to the customer."
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              additionalProperties: false
+              properties:
+                text: { type: string, minLength: 2, maxLength: 2000 }
+      responses:
+        "200": { $ref: "#/components/responses/AdminOrder" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+
 components:
   securitySchemes:
     adminSession:
@@ -853,6 +1032,11 @@ components:
       schema: { type: string, pattern: "^[a-z0-9-]{1,80}$" }
 
   responses:
+    AdminOrder:
+      description: The order with payment details, attention flag and timeline
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AdminOrder" }
     AdminProduct:
       description: The product with variants, filter values, pairings and images
       content:
@@ -1016,6 +1200,86 @@ components:
         value: { type: string, pattern: "^[a-z0-9-]{1,60}$" }
         label: { type: string, minLength: 1, maxLength: 80 }
         swatchHex: { type: string, pattern: "^(#[0-9A-Fa-f]{6})?$" }
+
+    FulfilmentStatus:
+      type: string
+      enum: [unfulfilled, preparing, in_transit, delivered, installed]
+
+    Tracking:
+      type: object
+      required: [carrier, number]
+      properties:
+        carrier: { type: string }
+        number: { type: string }
+
+    OrderAttention:
+      type: string
+      enum: [refund_due, late_capture, amount_mismatch]
+      description: "Money was taken but the order isn't going ahead. refund_due = paid then cancelled; late_capture = paid after the order expired (reinstate or refund); amount_mismatch = the gateway captured a different amount."
+
+    AdminOrderSummary:
+      type: object
+      required: [ref, createdAt, email, customerName, phone, city, status, paymentStatus, fulfilmentStatus, paymentMethod, totalPaise, itemCount]
+      properties:
+        ref: { type: string }
+        createdAt: { type: string, format: date-time }
+        email: { type: string }
+        customerName: { type: string }
+        phone: { type: string }
+        city: { type: string }
+        status: { type: string, enum: [pending_payment, placed, cancelled] }
+        paymentStatus: { type: string, enum: [pending, paid, failed, expired, refunded] }
+        fulfilmentStatus: { $ref: "#/components/schemas/FulfilmentStatus" }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        totalPaise: { $ref: "#/components/schemas/Paise" }
+        itemCount: { type: integer }
+        attention: { $ref: "#/components/schemas/OrderAttention" }
+
+    AdminOrderPage:
+      type: object
+      required: [items, page, total, counts]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrderSummary" }
+        page: { type: integer }
+        total: { type: integer }
+        counts:
+          type: object
+          required: [toFulfil, attention]
+          description: Totals across all orders, for the queue tabs.
+          properties:
+            toFulfil: { type: integer }
+            attention: { type: integer }
+
+    AdminOrderEvent:
+      type: object
+      required: [id, type, data, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        type: { type: string, description: "e.g. order_created, payment_captured, fulfilment_in_transit, order_cancelled, refund_recorded, note" }
+        data: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+        adminName: { type: string, description: Staff member who made the change; absent for system events. }
+
+    AdminOrder:
+      type: object
+      required: [order, payment, events]
+      properties:
+        order: { $ref: "#/components/schemas/Order" }
+        attention: { $ref: "#/components/schemas/OrderAttention" }
+        payment:
+          type: object
+          required: [provider, providerOrderId, providerPaymentId, status, amountPaise]
+          properties:
+            provider: { type: string }
+            providerOrderId: { type: string }
+            providerPaymentId: { type: string }
+            status: { type: string, enum: [created, captured, failed, expired] }
+            amountPaise: { $ref: "#/components/schemas/Paise" }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/AdminOrderEvent" }
 
     AdminProduct:
       allOf:
@@ -1548,8 +1812,9 @@ components:
         paymentStatus:
           type: string
           enum: [pending, paid, failed, expired, refunded]
-          description: "expired = not paid within the reservation window; stock was released."
-        fulfilmentStatus: { type: string, enum: [unfulfilled, preparing, in_transit, delivered, installed] }
+          description: "expired = no longer payable (the reservation window lapsed or the order was cancelled before payment); stock was released."
+        fulfilmentStatus: { $ref: "#/components/schemas/FulfilmentStatus" }
+        tracking: { $ref: "#/components/schemas/Tracking" }
         createdAt: { type: string, format: date-time }
         email: { type: string }
         shippingAddress: { $ref: "#/components/schemas/Address" }

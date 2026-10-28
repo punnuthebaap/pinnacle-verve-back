@@ -1,6 +1,6 @@
 # AI context — backend
 
-Read first: `HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/API.md`. System decision log + roadmap: `../pinnacle-verve/docs/`.
+Read first: `HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/API.md`. System decision log, roadmap, setup (`GETTING_STARTED.md`) and testing (`TESTING.md`): `../pinnacle-verve/docs/`.
 
 ## Facts
 
@@ -12,11 +12,12 @@ Read first: `HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/API.md`. System decision
 ## Conventions
 
 - Money: `int64` paise, GST-inclusive. All totals from `internal/pricing` (pure). Never accept client totals.
-- Layers: `httpapi` (transport mapping only) → services (`catalog`, `cart`, `order`) → `store`. Services return sqlc rows or small domain structs, never `api` types.
+- Layers: `httpapi` (transport mapping only) → services (`catalog`, `cart`, `order`, `settings`, `content`, `marketing`, `admin`, `catalogadmin`, `orderadmin`) → `store`. Services return sqlc rows or small domain structs, never `api` types.
 - Errors: services return sentinel errors; handlers map them to typed problem responses with stable `code`s (docs/API.md).
 - Writes that touch several tables use `database.InTx` and `q.WithTx(tx)`.
 - Order state: `status`, `payment_status`, `fulfilment_status` change independently; payment outcomes only via verified webhooks.
-- Tests: pure logic gets unit tests; HTTP flows go in `internal/app/app_test.go` (real DB).
+- Tests: pure logic gets unit tests; HTTP flows go in `internal/app/*_test.go` (real DB `pinnacle_test`, created automatically). Reset staff with `resetAdmins`, never `TRUNCATE admin_users CASCADE`.
+- Config comes from real environment variables only (`internal/platform/config`); `.env` is not loaded automatically. Defaults match local development.
 
 ## Constraints
 

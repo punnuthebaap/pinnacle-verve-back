@@ -1,4 +1,4 @@
-# Local PostgreSQL for development (alternative to scripts/dev-db.ps1). Matches the default DATABASE_URL.
+# Local PostgreSQL for development (alternative to the native Windows cluster in the README). Matches the default DATABASE_URL.
 services:
   db:
     image: postgres:17-alpine

@@ -31,7 +31,8 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A1 frontend (storefront PR #8).
 - ✅ A2a catalogue API: categories + filters, products (all content fields), variants (validated options, SKU/combination uniqueness, deactivate-not-delete), filter values, pairings; audit in the same transaction; storefront revalidation after each write. Test `TestAdminCatalog`.
 - ✅ A2b images: `internal/storage` (local disk, `MEDIA_DIR`), upload/reorder/alt/delete endpoints, `/media/*` serving, per-route body cap (migration 00005). Test `TestAdminImages`.
-- ⬜ A3 orders → A4 settings → A5 reviews/newsletter → A6 content.
+- ✅ A3 orders: `internal/orderadmin`, list/queues/search, detail + timeline, fulfilment with tracking (shown to shoppers), cancel, refund records, late-capture reinstatement, notes (migration 00006, view `order_attention`). Test `TestAdminOrders`.
+- ⬜ A4 settings → A5 reviews/newsletter → A6 content.
 
 ## Known issues / gaps
 
@@ -39,7 +40,9 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 - Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
-- Late captures after expiry (`payment_captured_after_expiry` events) need an ops view/refund flow once Razorpay is live.
+- Refunds are recorded, not issued: staff refund in the gateway dashboard and enter the reference (full refunds only; partial refunds/returns need business rules). Automate with Razorpay (B1).
+- No customer emails on dispatch/cancellation yet (needs an email provider and approved copy).
+- Admin actions lock the order row before payment rows (same order as the expiry sweeper); the webhook path locks payments first, so a simultaneous webhook and admin action can deadlock — Postgres aborts one and it can be retried. Unify lock order with the Razorpay work.
 - Gateway order creation runs inside the DB transaction (fine for mock; move after commit for Razorpay).
 - No rate limiting yet (newsletter, cart, orders) — M7.
 - Discounts/coupons not implemented; GST is one "included" figure (CGST/SGST split blocked by B3).
@@ -47,7 +50,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. A3 orders admin API: list/search/filter orders, detail with events, fulfilment transitions (preparing → in_transit → delivered → installed), cancel + release stock, late-capture follow-up.
+1. A4 settings: move commercial values (white-glove threshold, shipping, add-on GST, payment methods, pending TTL) from env to an audited settings table editable by owners.
 2. S3/R2 `storage.Store` implementation when hosting is chosen (B9).
 2. Move the gateway order call after commit (with retry) before Razorpay goes live.
 3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

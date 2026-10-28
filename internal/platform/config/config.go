@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Env            string // development | production
+	Env            string // development | staging (public test site: production rules, mock payments allowed) | production
 	Port           string
 	DatabaseURL    string
 	AutoMigrate    bool
@@ -46,6 +46,10 @@ type Config struct {
 
 func (c Config) IsProduction() bool { return c.Env == "production" }
 
+// IsDeployed reports a server reachable by others (staging or production): secure cookies and real
+// secrets are required.
+func (c Config) IsDeployed() bool { return c.Env == "staging" || c.Env == "production" }
+
 func Load() (Config, error) {
 	c := Config{
 		Env:                      get("APP_ENV", "development"),
@@ -69,19 +73,31 @@ func Load() (Config, error) {
 		RateLimitEnabled:         getBool("RATE_LIMIT_ENABLED", true),
 		TrustedProxies:           getList("TRUSTED_PROXIES", "127.0.0.1/32,::1/128"),
 	}
-	if c.IsProduction() {
-		if c.PaymentProvider == "mock" {
-			return c, fmt.Errorf("PAYMENT_PROVIDER=mock is not allowed in production")
-		}
+	switch c.Env {
+	case "development", "staging", "production":
+	default:
+		return c, fmt.Errorf("APP_ENV must be development, staging or production, got %q", c.Env)
+	}
+	if c.IsProduction() && c.PaymentProvider == "mock" {
+		return c, fmt.Errorf("PAYMENT_PROVIDER=mock is not allowed in production")
+	}
+	if c.IsDeployed() {
 		if !c.CookieSecure {
-			return c, fmt.Errorf("COOKIE_SECURE must be true in production")
+			return c, fmt.Errorf("COOKIE_SECURE must be true in %s", c.Env)
 		}
-		if c.RevalidateSecret == "dev-revalidate-secret" || len(c.RevalidateSecret) < 24 {
-			return c, fmt.Errorf("REVALIDATE_SECRET must be set to a strong value in production")
+		if weak(c.RevalidateSecret, "dev-revalidate-secret") {
+			return c, fmt.Errorf("REVALIDATE_SECRET must be set to a strong value in %s", c.Env)
+		}
+		// Anyone holding the mock secret can sign "payment captured" webhooks.
+		if c.PaymentProvider == "mock" && weak(c.MockWebhookSecret, "dev-mock-secret") {
+			return c, fmt.Errorf("MOCK_WEBHOOK_SECRET must be set to a strong value in %s", c.Env)
 		}
 	}
 	return c, nil
 }
+
+// weak reports a secret that is the development default or shorter than 24 characters.
+func weak(secret, devDefault string) bool { return secret == devDefault || len(secret) < 24 }
 
 func get(key, def string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {

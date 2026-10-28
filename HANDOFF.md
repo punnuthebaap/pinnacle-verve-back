@@ -1,6 +1,6 @@
 # Handoff — backend
 
-_Last updated: 2026-10-28 · API PRs #1–#15 merged into `main` · Next: owner acceptance testing locally, then deploy (B9)_
+_Last updated: 2026-10-28 · API PRs #1–#15 merged into `main` · Next: staging deployment (storefront repo `docs/DEPLOYMENT.md`)_
 
 New developers: setup and testing guides live in the storefront repo, `../pinnacle-verve/docs/GETTING_STARTED.md` and `docs/TESTING.md`.
 
@@ -48,6 +48,11 @@ Earlier (2026-10-27):
 - ✅ Per-IP rate limits (`internal/platform/ratelimit`): sign-in 20/min, newsletter 10/min, orders 20/min, mock payments 30/min, cart writes 120/min, image uploads 120/min → 429 + Retry-After. `RATE_LIMIT_ENABLED`, `TRUSTED_PROXIES`. Tests `TestLimiterWindows`, `TestClientIP`, `TestRateLimits`.
 - ✅ One lock order everywhere (order row, then payment rows): webhooks now match the expiry sweeper and admin actions, so a webhook racing a staff cancellation queues instead of deadlocking. Test `TestWebhookAndAdminCancelRace` (fails with a deadlock 500 on the old order).
 - ✅ Gateway order created **after** the order transaction commits (only the order row is locked during the call); on failure the order is removed and stock released → `503 payment_gateway_unavailable`, and the same checkout can be retried. Test `TestGatewayFailureAtCheckout`.
+
+## Deployment
+
+- ✅ `APP_ENV=staging`: production safeguards (secure cookies, strong `REVALIDATE_SECRET` and `MOCK_WEBHOOK_SECRET`) with test payments allowed; unknown `APP_ENV` values are refused. Seed is allowed in staging (refused in production); `-dev-reset` stays development only. Test `TestLoadDeployedRules`.
+- ✅ `Dockerfile` (static binaries server/admin/seed on Alpine, non-root, `/data/media`), cross-compiles for linux/arm64. The Compose stack lives in the storefront repo (`deploy/`).
 
 ## Known issues / gaps
 

@@ -53,7 +53,11 @@ CI (`.github/workflows/ci.yml`) checks generated code is up to date, then runs `
 
 ## Configuration
 
-All via environment; see `.env.example`. Production (`APP_ENV=production`) refuses to start with `PAYMENT_PROVIDER=mock`, without `COOKIE_SECURE=true`, or with a weak `REVALIDATE_SECRET`. Commercial values in env (white-glove threshold, shipping, add-on GST rate, payment methods, WhatsApp number, unpaid-order hold) only create the initial settings row; after that owners edit them in Admin → Settings. When the storefront isn't on `http://localhost:3000`, set `ALLOWED_ORIGINS` and `STOREFRONT_REVALIDATE_URL` to its address.
+All via environment; see `.env.example`. `APP_ENV` is `development` (default), `staging` (a public test site) or `production`. Staging and production refuse to start without `COOKIE_SECURE=true` or with a weak `REVALIDATE_SECRET` (or, with test payments, a weak `MOCK_WEBHOOK_SECRET`). Production also refuses `PAYMENT_PROVIDER=mock`. Commercial values in env (white-glove threshold, shipping, add-on GST rate, payment methods, WhatsApp number, unpaid-order hold) only create the initial settings row; after that owners edit them in Admin → Settings. When the storefront isn't on `http://localhost:3000`, set `ALLOWED_ORIGINS` and `STOREFRONT_REVALIDATE_URL` to its address.
+
+## Docker
+
+`Dockerfile` builds `server`, `admin` and `seed` into one small image (amd64 or arm64). It is run by the storefront repo's `deploy/compose.yml`, see its `docs/DEPLOYMENT.md`. In a running stack: `docker compose exec api admin create-owner …`, `docker compose exec api seed` (staging only).
 
 ## Docs
 

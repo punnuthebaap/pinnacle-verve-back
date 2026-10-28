@@ -25,7 +25,7 @@ internal/orderadmin   admin order operations: queues/search, fulfilment, cancel,
 internal/catalogadmin admin catalogue writes: validation, audit-in-transaction, storefront revalidation (HTTPRevalidator)
 internal/admin        staff accounts: argon2id passwords, lockout, sessions, RBAC (Can(role, area)), audit log
 cmd/admin             bootstrap the first owner (password from ADMIN_PASSWORD)
-internal/platform     config, database (pool, migrate, InTx), httpx (middleware, problems), session
+internal/platform     config, database (pool, migrate, InTx), httpx (middleware, problems), session, ratelimit (per-IP limits)
 ```
 
 Dependency direction: `httpapi → services (catalog|cart|order) → store`. Services never import `api`. `pricing` and `payment` have no DB access.

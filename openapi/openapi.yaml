@@ -1103,6 +1103,131 @@ paths:
         "422": { $ref: "#/components/responses/Problem" }
 
 
+  /admin/reviews:
+    get:
+      tags: [admin]
+      operationId: adminListReviews
+      description: Content role. Newest first, 25 per page. q matches review text, author or product name.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/ReviewStatus" }
+        - name: productId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: rating
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 5 }
+        - name: writtenOnly
+          in: query
+          description: Hide rating-only entries (default true).
+          schema: { type: boolean, default: true }
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 80 }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Reviews
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminReviewPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /admin/reviews/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [admin]
+      operationId: adminSetReviewStatus
+      description: Publish, reject or return a review to pending. The product's rating is recomputed and the storefront revalidated. Review text is never edited.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status: { $ref: "#/components/schemas/ReviewStatus" }
+      responses:
+        "204": { description: Updated }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /admin/newsletter:
+    get:
+      tags: [admin]
+      operationId: adminListSubscribers
+      description: Content role. Newest first, 25 per page.
+      security: [{ adminSession: [] }]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 120 }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10000, default: 1 }
+      responses:
+        "200":
+          description: Subscribers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, page, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [email, createdAt]
+                      properties:
+                        email: { type: string }
+                        createdAt: { type: string, format: date-time }
+                  page: { type: integer }
+                  total: { type: integer }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /admin/newsletter/export:
+    get:
+      tags: [admin]
+      operationId: adminExportSubscribers
+      description: All subscribers as CSV (email, subscribed_at in IST). Audited, as the file contains personal data.
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema: { type: string }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /admin/newsletter/{email}:
+    parameters:
+      - name: email
+        in: path
+        required: true
+        schema: { type: string, maxLength: 254 }
+    delete:
+      tags: [admin]
+      operationId: adminRemoveSubscriber
+      description: Remove an address, e.g. when the person asks to be forgotten.
+      security: [{ adminSession: [] }]
+      responses:
+        "204": { description: Removed }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+
 components:
   securitySchemes:
     adminSession:
@@ -1438,6 +1563,44 @@ components:
           required: [code]
           properties:
             code: { type: string }
+
+    ReviewStatus:
+      type: string
+      enum: [pending, published, rejected]
+
+    AdminReview:
+      type: object
+      required: [id, product, rating, authorName, authorMeta, body, variantLabel, verified, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        product:
+          type: object
+          required: [id, slug, name]
+          properties:
+            id: { type: string, format: uuid }
+            slug: { type: string }
+            name: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        authorName: { type: string }
+        authorMeta: { type: string }
+        body: { type: string, description: Empty for rating-only entries. }
+        variantLabel: { type: string }
+        verified: { type: boolean }
+        status: { $ref: "#/components/schemas/ReviewStatus" }
+        createdAt: { type: string, format: date-time }
+        moderatedAt: { type: string, format: date-time }
+        moderatedBy: { type: string }
+
+    AdminReviewPage:
+      type: object
+      required: [items, page, total, pending]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminReview" }
+        page: { type: integer }
+        total: { type: integer }
+        pending: { type: integer, description: Reviews awaiting moderation (all products). }
 
     AdminProduct:
       allOf:

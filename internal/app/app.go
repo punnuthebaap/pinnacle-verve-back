@@ -19,6 +19,7 @@ import (
 	"github.com/pinnacleverve/api/internal/catalog"
 	"github.com/pinnacleverve/api/internal/catalogadmin"
 	"github.com/pinnacleverve/api/internal/httpapi"
+	"github.com/pinnacleverve/api/internal/marketing"
 	"github.com/pinnacleverve/api/internal/order"
 	"github.com/pinnacleverve/api/internal/orderadmin"
 	"github.com/pinnacleverve/api/internal/payment"
@@ -78,6 +79,7 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		Log:      log,
 	}
 	srv.OrderAdmin = orderadmin.NewService(pool, q, srv.Admin)
+	srv.Marketing = marketing.NewService(pool, q, srv.Admin, rv)
 	media := storage.Local{Dir: cfg.MediaDir, URLPrefix: "/media"}
 	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin, rv, media)
 

@@ -19,7 +19,7 @@ type storeSettings struct {
 func TestAdminSettings(t *testing.T) {
 	s := newStack(t)
 	ctx := context.Background()
-	if _, err := s.pool.Exec(ctx, "TRUNCATE admin_users CASCADE"); err != nil {
+	if _, err := s.pool.Exec(ctx, resetAdmins); err != nil {
 		t.Fatal(err)
 	}
 	owner := adminClient(t, s, "owner@example.com", "owner")

@@ -61,7 +61,7 @@ func (o adminOrder) eventTypes() []string {
 func TestAdminOrders(t *testing.T) {
 	s := newStack(t)
 	ctx := context.Background()
-	for _, q := range []string{"TRUNCATE admin_users CASCADE", "TRUNCATE orders CASCADE"} {
+	for _, q := range []string{resetAdmins, "TRUNCATE orders CASCADE"} {
 		if _, err := s.pool.Exec(ctx, q); err != nil {
 			t.Fatal(err)
 		}

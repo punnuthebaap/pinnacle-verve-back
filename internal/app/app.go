@@ -25,6 +25,7 @@ import (
 	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
 	"github.com/pinnacleverve/api/internal/platform/session"
+	"github.com/pinnacleverve/api/internal/settings"
 	"github.com/pinnacleverve/api/internal/storage"
 	"github.com/pinnacleverve/api/internal/store"
 )
@@ -63,14 +64,17 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 	}
 
 	q := store.New(pool)
+	adm := admin.NewService(q, log)
+	st := settings.NewService(pool, q, adm, settings.Defaults(cfg))
 	srv := &httpapi.Server{
-		Pool:    pool,
-		Q:       q,
-		Catalog: catalog.NewService(q),
-		Cart:    cart.NewService(pool, q, cfg),
-		Orders:  order.NewService(pool, q, cfg, provider, log),
-		Admin:   admin.NewService(q, log),
-		Log:     log,
+		Pool:     pool,
+		Q:        q,
+		Catalog:  catalog.NewService(q),
+		Cart:     cart.NewService(pool, q, st),
+		Orders:   order.NewService(pool, q, st, provider, log),
+		Admin:    adm,
+		Settings: st,
+		Log:      log,
 	}
 	srv.OrderAdmin = orderadmin.NewService(pool, q, srv.Admin)
 	media := storage.Local{Dir: cfg.MediaDir, URLPrefix: "/media"}

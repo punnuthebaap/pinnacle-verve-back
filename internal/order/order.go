@@ -23,9 +23,9 @@ import (
 
 	"github.com/pinnacleverve/api/internal/cart"
 	"github.com/pinnacleverve/api/internal/payment"
-	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/database"
 	"github.com/pinnacleverve/api/internal/platform/session"
+	"github.com/pinnacleverve/api/internal/settings"
 	"github.com/pinnacleverve/api/internal/store"
 )
 
@@ -69,22 +69,26 @@ type View struct {
 type Service struct {
 	pool      *pgxpool.Pool
 	q         *store.Queries
-	cfg       config.Config
+	settings  *settings.Service
 	active    payment.Provider
 	providers map[string]payment.Provider
 	log       *slog.Logger
 }
 
-func NewService(pool *pgxpool.Pool, q *store.Queries, cfg config.Config, active payment.Provider, log *slog.Logger, all ...payment.Provider) *Service {
+func NewService(pool *pgxpool.Pool, q *store.Queries, st *settings.Service, active payment.Provider, log *slog.Logger, all ...payment.Provider) *Service {
 	m := map[string]payment.Provider{active.Name(): active}
 	for _, p := range all {
 		m[p.Name()] = p
 	}
-	return &Service{pool: pool, q: q, cfg: cfg, active: active, providers: m, log: log}
+	return &Service{pool: pool, q: q, settings: st, active: active, providers: m, log: log}
 }
 
 func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (View, error) {
-	if !slices.Contains(s.cfg.EnabledPaymentMethods, in.PaymentMethod) {
+	rules, err := s.settings.Current(ctx, s.q)
+	if err != nil {
+		return View{}, err
+	}
+	if !slices.Contains(rules.PaymentMethods, in.PaymentMethod) {
 		return View{}, ErrMethodUnavailable
 	}
 	sid, err := session.Ensure(ctx)
@@ -102,7 +106,7 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return err
 		}
-		orderID, err = s.create(ctx, q, sid, idemKey, in)
+		orderID, err = s.create(ctx, q, sid, idemKey, in, rules)
 		return err
 	})
 	var pgErr *pgconn.PgError
@@ -115,7 +119,7 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 	return Load(ctx, s.q, orderID)
 }
 
-func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idemKey string, in CreateInput) (uuid.UUID, error) {
+func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idemKey string, in CreateInput, rules settings.Commercial) (uuid.UUID, error) {
 	cartRow, err := q.GetCartBySession(ctx, sid)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return uuid.Nil, ErrEmptyCart
@@ -123,7 +127,7 @@ func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idem
 	if err != nil {
 		return uuid.Nil, err
 	}
-	c, err := cart.Load(ctx, q, cartRow, s.cfg)
+	c, err := cart.Load(ctx, q, cartRow, rules)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -364,8 +368,9 @@ func (s *Service) ExpirePending(ctx context.Context, ttl time.Duration) (int, er
 	return n, err
 }
 
-// RunExpirySweeper calls ExpirePending every interval until ctx is cancelled.
-func (s *Service) RunExpirySweeper(ctx context.Context, ttl, interval time.Duration) {
+// RunExpirySweeper calls ExpirePending every interval until ctx is cancelled, using the hold time
+// currently configured in the admin settings.
+func (s *Service) RunExpirySweeper(ctx context.Context, interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
@@ -373,7 +378,12 @@ func (s *Service) RunExpirySweeper(ctx context.Context, ttl, interval time.Durat
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			if n, err := s.ExpirePending(ctx, ttl); err != nil {
+			rules, err := s.settings.Current(ctx, s.q)
+			if err != nil {
+				s.log.Error("read settings for expiry sweep", "err", err)
+				continue
+			}
+			if n, err := s.ExpirePending(ctx, rules.PendingOrderTTL); err != nil {
 				s.log.Error("expire pending orders", "err", err)
 			} else if n > 0 {
 				s.log.Info("expired pending orders", "count", n)

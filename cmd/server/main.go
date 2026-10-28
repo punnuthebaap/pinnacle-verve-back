@@ -47,7 +47,7 @@ func run(log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	go a.Orders.RunExpirySweeper(ctx, cfg.PendingOrderTTL, cfg.SweepInterval)
+	go a.Orders.RunExpirySweeper(ctx, cfg.SweepInterval)
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           a.Handler,

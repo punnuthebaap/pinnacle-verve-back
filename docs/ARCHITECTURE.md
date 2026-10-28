@@ -18,6 +18,7 @@ internal/order        cart → order, stock reservation, payment webhooks
 internal/payment      Provider interface; Mock (HMAC-signed webhooks); Razorpay later
 internal/pricing      pure totals/GST math (unit tested)
 internal/storage      Store interface for uploaded media; Local (disk + /media handler) until hosting is chosen
+internal/settings     store settings (commercial values, add-ons): read per request by cart/order, edited by owners with audit
 internal/orderadmin   admin order operations: queues/search, fulfilment, cancel, refund records, late-capture reinstatement, notes (order event + audit in one transaction)
 internal/catalogadmin admin catalogue writes: validation, audit-in-transaction, storefront revalidation (HTTPRevalidator)
 internal/admin        staff accounts: argon2id passwords, lockout, sessions, RBAC (Can(role, area)), audit log
@@ -45,7 +46,8 @@ Dependency direction: `httpapi → services (catalog|cart|order) → store`. Ser
 - Stock is reserved with a conditional `UPDATE … WHERE stock >= qty` inside the order transaction; released when payment fails.
 - Order creation is idempotent per (session, Idempotency-Key). Webhooks are idempotent per (provider, event id) and lock the payment row.
 - Payment amount mismatch on capture is recorded and left for manual review (never auto-accepted).
-- Unpaid orders expire after `PENDING_ORDER_TTL_MINUTES` (default 30): a per-minute sweeper claims them with `SKIP LOCKED`, releases stock and sets `cancelled` / `expired`. A capture that arrives after expiry is recorded as `payment_captured_after_expiry` for a manual refund — never auto-accepted.
+- Commercial values (white-glove threshold, shipping, add-on GST, payment methods, unpaid-order hold time) live in the single-row `store_settings` table (migration 00007), created from the env defaults on first use and edited by owners in the admin. Cart pricing, checkout and the expiry sweeper read the row per request/tick, so every instance applies a change at once; order creation prices with the same values the cart showed.
+- Unpaid orders expire after the configured hold time (default 30 min): a per-minute sweeper claims them with `SKIP LOCKED`, releases stock and sets `cancelled` / `expired`. A capture that arrives after expiry is recorded as `payment_captured_after_expiry` for a manual refund — never auto-accepted.
 - Cart `notes` (installation instructions) are copied into the order when checkout sends none, and cleared with the cart after payment.
 
 ## Known gaps (tracked in HANDOFF)

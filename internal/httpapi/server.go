@@ -17,6 +17,7 @@ import (
 	"github.com/pinnacleverve/api/internal/order"
 	"github.com/pinnacleverve/api/internal/orderadmin"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
+	"github.com/pinnacleverve/api/internal/settings"
 	"github.com/pinnacleverve/api/internal/store"
 )
 
@@ -29,6 +30,7 @@ type Server struct {
 	Admin        *admin.Service
 	CatalogAdmin *catalogadmin.Service
 	OrderAdmin   *orderadmin.Service
+	Settings     *settings.Service
 	Log          *slog.Logger
 }
 

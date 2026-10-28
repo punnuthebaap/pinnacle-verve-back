@@ -254,3 +254,14 @@ type Session struct {
 	LastSeen  pgtype.Timestamptz
 	ExpiresAt pgtype.Timestamptz
 }
+
+type StoreSetting struct {
+	ID                       bool
+	WhiteGloveThresholdPaise int64
+	ShippingPaise            int64
+	AddonGstRateBps          int32
+	PaymentMethods           []string
+	PendingOrderTtlMinutes   int32
+	UpdatedAt                pgtype.Timestamptz
+	UpdatedBy                pgtype.UUID
+}

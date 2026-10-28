@@ -1,0 +1,7 @@
+.git
+.github
+.local
+.env
+test-results
+*.exe
+coverage.out

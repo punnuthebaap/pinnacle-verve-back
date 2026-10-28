@@ -38,6 +38,10 @@ type Config struct {
 
 	// Uploaded media (local disk until hosting is chosen, decision D35).
 	MediaDir string
+
+	// Per-IP throttling of abuse-prone endpoints; X-Forwarded-For is trusted only from these proxies.
+	RateLimitEnabled bool
+	TrustedProxies   []string
 }
 
 func (c Config) IsProduction() bool { return c.Env == "production" }
@@ -62,6 +66,8 @@ func Load() (Config, error) {
 		StorefrontRevalidateURL:  get("STOREFRONT_REVALIDATE_URL", "http://localhost:3000/internal/revalidate"),
 		RevalidateSecret:         get("REVALIDATE_SECRET", "dev-revalidate-secret"),
 		MediaDir:                 get("MEDIA_DIR", ".local/media"),
+		RateLimitEnabled:         getBool("RATE_LIMIT_ENABLED", true),
+		TrustedProxies:           getList("TRUSTED_PROXIES", "127.0.0.1/32,::1/128"),
 	}
 	if c.IsProduction() {
 		if c.PaymentProvider == "mock" {

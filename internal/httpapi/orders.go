@@ -43,6 +43,8 @@ func (s *Server) CreateOrder(ctx context.Context, r api.CreateOrderRequestObject
 		return api.CreateOrder409ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(pOutOfStock)}, nil
 	case errors.Is(err, order.ErrUnavailable):
 		return api.CreateOrder409ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(pUnavailable)}, nil
+	case errors.Is(err, order.ErrGatewayUnavailable):
+		return api.CreateOrder503ApplicationProblemPlusJSONResponse(pGateway), nil
 	case errors.Is(err, order.ErrDuplicateInFlight):
 		return api.CreateOrder409ApplicationProblemPlusJSONResponse{ProblemApplicationProblemPlusJSONResponse: api.ProblemApplicationProblemPlusJSONResponse(pDuplicate)}, nil
 	case err != nil:

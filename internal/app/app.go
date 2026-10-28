@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,6 +27,7 @@ import (
 	"github.com/pinnacleverve/api/internal/payment"
 	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/httpx"
+	"github.com/pinnacleverve/api/internal/platform/ratelimit"
 	"github.com/pinnacleverve/api/internal/platform/session"
 	"github.com/pinnacleverve/api/internal/settings"
 	"github.com/pinnacleverve/api/internal/storage"
@@ -38,6 +40,19 @@ func bodyLimit(r *http.Request) int64 {
 		return catalogadmin.MaxImageBytes + 1<<10
 	}
 	return 1 << 20
+}
+
+// rateRules are per client IP and per minute; the first matching rule applies. Sign-in also locks an
+// account after repeated failures (package admin). Gateway webhooks are never limited.
+var rateRules = []ratelimit.Rule{
+	{Name: "admin_signin", Limit: 20, Window: time.Minute, Match: ratelimit.Post("/api/v1/admin/session")},
+	{Name: "newsletter", Limit: 10, Window: time.Minute, Match: ratelimit.Post("/api/v1/newsletter/subscriptions")},
+	{Name: "orders", Limit: 20, Window: time.Minute, Match: ratelimit.Post("/api/v1/orders")},
+	{Name: "mock_payments", Limit: 30, Window: time.Minute, Match: ratelimit.PostPrefix("/api/v1/payments/mock/")},
+	{Name: "cart", Limit: 120, Window: time.Minute, Match: ratelimit.Writes("/api/v1/cart")},
+	{Name: "admin_uploads", Limit: 120, Window: time.Minute, Match: func(r *http.Request) bool {
+		return r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/api/v1/admin/products/") && strings.HasSuffix(r.URL.Path, "/images")
+	}},
 }
 
 // App is the assembled service: the HTTP handler plus background work.
@@ -108,9 +123,19 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 		},
 	})
 
+	trusted, err := ratelimit.ParseCIDRs(cfg.TrustedProxies)
+	if err != nil {
+		return nil, fmt.Errorf("TRUSTED_PROXIES: %w", err)
+	}
+	limits := func(next http.Handler) http.Handler { return next }
+	if cfg.RateLimitEnabled {
+		limits = ratelimit.New(rateRules, ratelimit.ClientIP(trusted), log).Middleware
+	}
+
 	handler := httpx.Chain(srv.Handler(http.NewServeMux()),
 		httpx.Observe(log),
 		httpx.Harden(bodyLimit),
+		limits,
 		httpx.SameOrigin(cfg.AllowedOrigins),
 		session.Middleware(cfg.CookieSecure, cart.Persister(q)),
 		srv.Admin.Middleware(cfg.CookieSecure),

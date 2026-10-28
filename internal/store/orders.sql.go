@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteOrder = `-- name: DeleteOrder :exec
+DELETE FROM orders WHERE id = $1
+`
+
+// An order whose gateway order could not be created is removed (its stock released first) so the shopper
+// can retry with the same idempotency key.
+func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrder, id)
+	return err
+}
+
 const expireOrderPayments = `-- name: ExpireOrderPayments :exec
 UPDATE payments SET status = 'expired', updated_at = now() WHERE order_id = $1 AND status = 'created'
 `
@@ -400,6 +411,40 @@ func (q *Queries) LockExpiredPendingOrders(ctx context.Context, ttlMinutes int32
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockOrder = `-- name: LockOrder :one
+SELECT id, ref, session_id, idempotency_key, email, shipping_address, gstin, notes, payment_method, status, payment_status, fulfilment_status, subtotal_paise, discount_paise, shipping_paise, addons_paise, tax_paise, total_paise, created_at, updated_at, tracking_carrier, tracking_number FROM orders WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) LockOrder(ctx context.Context, id uuid.UUID) (Order, error) {
+	row := q.db.QueryRow(ctx, lockOrder, id)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.Ref,
+		&i.SessionID,
+		&i.IdempotencyKey,
+		&i.Email,
+		&i.ShippingAddress,
+		&i.Gstin,
+		&i.Notes,
+		&i.PaymentMethod,
+		&i.Status,
+		&i.PaymentStatus,
+		&i.FulfilmentStatus,
+		&i.SubtotalPaise,
+		&i.DiscountPaise,
+		&i.ShippingPaise,
+		&i.AddonsPaise,
+		&i.TaxPaise,
+		&i.TotalPaise,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TrackingCarrier,
+		&i.TrackingNumber,
+	)
+	return i, err
 }
 
 const lockPaymentByProviderOrderID = `-- name: LockPaymentByProviderOrderID :one

@@ -19,6 +19,7 @@ internal/payment      Provider interface; Mock (HMAC-signed webhooks); Razorpay 
 internal/pricing      pure totals/GST math (unit tested)
 internal/storage      Store interface for uploaded media; Local (disk + /media handler) until hosting is chosen
 internal/settings     store settings (commercial values, add-ons): read per request by cart/order, edited by owners with audit
+internal/marketing    review moderation (rating aggregates recomputed in-transaction) and newsletter list/export
 internal/orderadmin   admin order operations: queues/search, fulfilment, cancel, refund records, late-capture reinstatement, notes (order event + audit in one transaction)
 internal/catalogadmin admin catalogue writes: validation, audit-in-transaction, storefront revalidation (HTTPRevalidator)
 internal/admin        staff accounts: argon2id passwords, lockout, sessions, RBAC (Can(role, area)), audit log

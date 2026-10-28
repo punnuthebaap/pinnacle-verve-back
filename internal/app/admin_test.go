@@ -14,7 +14,7 @@ import (
 func TestAdminAuth(t *testing.T) {
 	s := newStack(t)
 	ctx := context.Background()
-	if _, err := s.pool.Exec(ctx, "TRUNCATE admin_users CASCADE"); err != nil {
+	if _, err := s.pool.Exec(ctx, resetAdmins); err != nil {
 		t.Fatal(err)
 	}
 	hash, _ := admin.HashPassword("owner-password-123")

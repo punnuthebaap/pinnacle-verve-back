@@ -234,6 +234,8 @@ type ProductReview struct {
 	Verified     bool
 	Status       string
 	CreatedAt    pgtype.Timestamptz
+	ModeratedAt  pgtype.Timestamptz
+	ModeratedBy  pgtype.UUID
 }
 
 type ProductVariant struct {

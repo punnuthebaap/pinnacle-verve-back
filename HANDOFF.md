@@ -34,13 +34,14 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A3 orders: `internal/orderadmin`, list/queues/search, detail + timeline, fulfilment with tracking (shown to shoppers), cancel, refund records, late-capture reinstatement, notes (migration 00006, view `order_attention`). Test `TestAdminOrders`.
 - ✅ A4 settings: `internal/settings`, `store_settings` row (migration 00007) replacing env values at runtime, add-on editing, public `/checkout-options`; cart/order/sweeper read settings per request. Test `TestAdminSettings`.
 - ✅ Contact WhatsApp number as a setting (migration 00008, default `+918084047949` confirmed by the owner 2026-10-28), public `/contact`, settings changes revalidate storefront tag `settings`. Cash on delivery removed from the API.
-- ⬜ A5 reviews/newsletter → A6 content.
+- ✅ A5: `internal/marketing`, review moderation with rating recompute (migration 00009: moderated_at/by), newsletter list, CSV export (formula-safe, audited) and removal. Test `TestAdminMarketing`. Tests reset staff with `resetAdmins` (no TRUNCATE CASCADE: it would wipe reviews/order events that reference admins).
+- ⬜ A6 content.
 
 ## Known issues / gaps
 
 - Admin sign-in has no 2FA (owner decision); add IP-based rate limiting for password spraying in M7.
 
-- Review submission/moderation endpoints not built (M5, needs accounts or verified-purchase rule).
+- Public review submission not built: who may review (anyone, moderated; or verified buyers only) is an owner decision (M5). Moderation is ready for it.
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
 - Refunds are recorded, not issued: staff refund in the gateway dashboard and enter the reference (full refunds only; partial refunds/returns need business rules). Automate with Razorpay (B1).
 - No customer emails on dispatch/cancellation yet (needs an email provider and approved copy).
@@ -52,7 +53,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. A5: review moderation (approve/hide, reply) and newsletter subscriber list/export; A6 content (homepage, navigation, category texts, legal pages).
+1. A6 content (homepage texts, navigation, footer, legal pages) editable by the content role.
 2. S3/R2 `storage.Store` implementation when hosting is chosen (B9).
 2. Move the gateway order call after commit (with retry) before Razorpay goes live.
 3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

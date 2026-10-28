@@ -56,7 +56,7 @@ type adminProductImages struct {
 func TestAdminImages(t *testing.T) {
 	s := newStack(t)
 	ctx := context.Background()
-	if _, err := s.pool.Exec(ctx, "TRUNCATE admin_users CASCADE"); err != nil {
+	if _, err := s.pool.Exec(ctx, resetAdmins); err != nil {
 		t.Fatal(err)
 	}
 	cat := adminClient(t, s, "catalog@example.com", "catalog")

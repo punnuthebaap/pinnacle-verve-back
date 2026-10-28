@@ -41,7 +41,7 @@ type adminProduct struct {
 func TestAdminCatalog(t *testing.T) {
 	s := newStack(t)
 	ctx := context.Background()
-	if _, err := s.pool.Exec(ctx, "TRUNCATE admin_users CASCADE"); err != nil {
+	if _, err := s.pool.Exec(ctx, resetAdmins); err != nil {
 		t.Fatal(err)
 	}
 	cat := adminClient(t, s, "catalog@example.com", "catalog")
@@ -169,3 +169,7 @@ func TestAdminCatalog(t *testing.T) {
 		t.Fatalf("storefront revalidated %d times, want %d", n, writes)
 	}
 }
+
+// resetAdmins removes staff accounts and their audit trail without cascading into the business tables
+// that reference admins with ON DELETE SET NULL (reviews, order events, settings).
+const resetAdmins = "TRUNCATE admin_audit, admin_sessions; DELETE FROM admin_users"

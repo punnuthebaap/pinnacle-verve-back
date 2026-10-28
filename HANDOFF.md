@@ -40,6 +40,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 ## M7 hardening
 
 - ✅ Per-IP rate limits (`internal/platform/ratelimit`): sign-in 20/min, newsletter 10/min, orders 20/min, mock payments 30/min, cart writes 120/min, image uploads 120/min → 429 + Retry-After. `RATE_LIMIT_ENABLED`, `TRUSTED_PROXIES`. Tests `TestLimiterWindows`, `TestClientIP`, `TestRateLimits`.
+- ✅ One lock order everywhere (order row, then payment rows): webhooks now match the expiry sweeper and admin actions, so a webhook racing a staff cancellation queues instead of deadlocking. Test `TestWebhookAndAdminCancelRace` (fails with a deadlock 500 on the old order).
 - ✅ Gateway order created **after** the order transaction commits (only the order row is locked during the call); on failure the order is removed and stock released → `503 payment_gateway_unavailable`, and the same checkout can be retried. Test `TestGatewayFailureAtCheckout`.
 
 ## Known issues / gaps
@@ -50,7 +51,6 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
 - Refunds are recorded, not issued: staff refund in the gateway dashboard and enter the reference (full refunds only; partial refunds/returns need business rules). Automate with Razorpay (B1).
 - No customer emails on dispatch/cancellation yet (needs an email provider and approved copy).
-- Admin actions lock the order row before payment rows (same order as the expiry sweeper); the webhook path locks payments first, so a simultaneous webhook and admin action can deadlock — Postgres aborts one and it can be retried. Unify lock order with the Razorpay work.
 - Discounts/coupons not implemented; GST is one "included" figure (CGST/SGST split blocked by B3).
 - `ListProducts` returns `total=0` when the requested page is beyond the last page (window count).
 

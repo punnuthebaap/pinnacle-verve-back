@@ -84,3 +84,6 @@ SELECT * FROM orders WHERE id = $1 FOR UPDATE;
 -- can retry with the same idempotency key.
 -- name: DeleteOrder :exec
 DELETE FROM orders WHERE id = $1;
+
+-- name: GetPaymentByProviderOrderID :one
+SELECT * FROM payments WHERE provider = $1 AND provider_order_id = $2;

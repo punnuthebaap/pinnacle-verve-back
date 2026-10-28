@@ -286,11 +286,20 @@ func (s *Service) HandleWebhook(ctx context.Context, provider string, h http.Hea
 		if err != nil || fresh == 0 {
 			return err // duplicate delivery is a no-op
 		}
-		pay, err := q.LockPaymentByProviderOrderID(ctx, store.LockPaymentByProviderOrderIDParams{Provider: provider, ProviderOrderID: ev.ProviderOrderID})
+		found, err := q.GetPaymentByProviderOrderID(ctx, store.GetPaymentByProviderOrderIDParams{Provider: provider, ProviderOrderID: ev.ProviderOrderID})
 		if errors.Is(err, pgx.ErrNoRows) {
 			s.log.Warn("webhook for unknown gateway order", "provider", provider, "provider_order_id", ev.ProviderOrderID)
 			return nil
 		}
+		if err != nil {
+			return err
+		}
+		// Lock order before payment, like the expiry sweeper and admin actions, so concurrent work on the
+		// same order queues instead of deadlocking.
+		if _, err := q.LockOrder(ctx, found.OrderID); err != nil {
+			return err
+		}
+		pay, err := q.LockPaymentByProviderOrderID(ctx, store.LockPaymentByProviderOrderIDParams{Provider: provider, ProviderOrderID: ev.ProviderOrderID})
 		if err != nil {
 			return err
 		}
@@ -341,7 +350,7 @@ func (s *Service) CompleteMock(ctx context.Context, providerOrderID string, succ
 	if !ok {
 		return ErrMockNotEnabled
 	}
-	pay, err := s.q.LockPaymentByProviderOrderID(ctx, store.LockPaymentByProviderOrderIDParams{Provider: "mock", ProviderOrderID: providerOrderID})
+	pay, err := s.q.GetPaymentByProviderOrderID(ctx, store.GetPaymentByProviderOrderIDParams{Provider: "mock", ProviderOrderID: providerOrderID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	}

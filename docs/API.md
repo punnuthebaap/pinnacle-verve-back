@@ -15,9 +15,13 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
 | 401 | `invalid_signature` | Webhook signature check failed |
 | 403 | `forbidden_origin` | Cross-site state-changing request |
 | 404 | `not_found` | Unknown resource, or order not owned by this session |
-| 409 | `out_of_stock`, `item_unavailable`, `duplicate_request` | Retry after refreshing state |
-| 422 | `quantity_limit`, `unknown_addon`, `empty_cart`, `payment_method_unavailable` | Business rule rejected |
-| 500/503 | `internal`, `unavailable` | Server fault (logged with `X-Request-Id`) |
+| 401 | `unauthenticated`, `invalid_credentials` | Admin: no/expired staff session, wrong sign-in |
+| 403 | `forbidden` | Admin: role lacks this area |
+| 409 | `out_of_stock`, `item_unavailable`, `duplicate_request`, `slug_taken`, `sku_taken`, `last_owner` | Retry after refreshing state / conflict |
+| 413 | `payload_too_large`, `image_too_large` | Body over 1 MiB (10 MiB uploads) |
+| 422 | `quantity_limit`, `unknown_addon`, `empty_cart`, `payment_method_unavailable`, `invalid` | Business rule rejected (`invalid`: admin message in `title`) |
+| 429 | `rate_limited`, `account_locked` | Per-IP limit (`Retry-After`) / staff account locked 15 min |
+| 500/503 | `internal`, `unavailable`, `payment_gateway_unavailable` | Server fault (logged with `X-Request-Id`); gateway down at checkout (retry is safe) |
 
 ## Sessions and security
 

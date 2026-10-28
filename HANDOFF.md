@@ -1,6 +1,8 @@
 # Handoff — backend
 
-_Last updated: 2026-10-27 · Current milestone: M4_
+_Last updated: 2026-10-28 · API PRs #1–#15 merged into `main` · Next: owner acceptance testing locally, then deploy (B9)_
+
+New developers: setup and testing guides live in the storefront repo, `../pinnacle-verve/docs/GETTING_STARTED.md` and `docs/TESTING.md`.
 
 ## Done (M0 + M1)
 
@@ -11,7 +13,11 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - Dev fixtures (`db/seed/dev.sql`): 2 categories, 13 products, 24-variant configurable Contour mirror, facets, 2 add-ons.
 - CI workflow: generated-code drift check, vet, race tests against Postgres service.
 
-## Validation (2026-10-27)
+## Validation
+
+- 2026-10-28, merged `main` in a fresh clone: `go vet ./...` clean, `go test ./...` pass; storefront Playwright 33/33 against it; seed + `cmd/admin create-owner` + `cmd/server` as in GETTING_STARTED.
+
+Earlier (2026-10-27):
 
 - `go build ./...`, `go vet ./...`: clean.
 - `go test ./...`: pass — pricing, payment signature, variant label, and `TestPurchaseJourney` (real DB: filters, 404s, CSRF 403, validation 400, stock 409, add-on totals, idempotent order replay, forged webhook 401, mock capture, cart cleared, stock decremented, cross-session order 404).

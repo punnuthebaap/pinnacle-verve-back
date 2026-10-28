@@ -1,6 +1,7 @@
 -- DEVELOPMENT FIXTURES ONLY. Placeholder catalogue transcribed from the Figma designs (decision D16).
--- Running the seed RESETS all catalogue, cart and order data, and the store settings (back to env defaults).
-TRUNCATE categories, products, addons, sessions, orders, payment_events, newsletter_subscribers, store_settings CASCADE;
+-- Running the seed RESETS all catalogue, cart and order data, the store settings (back to env defaults)
+-- and edited content (the storefront falls back to its bundled copy).
+TRUNCATE categories, products, addons, sessions, orders, payment_events, newsletter_subscribers, store_settings, content_documents, content_pages CASCADE;
 
 -- IDs are derived from slugs/SKUs (md5 → uuid) so re-seeding keeps them stable. Otherwise pages cached
 -- by the storefront would keep pointing at variant IDs that no longer exist.

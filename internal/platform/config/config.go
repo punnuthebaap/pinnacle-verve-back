@@ -26,6 +26,7 @@ type Config struct {
 	ShippingPaise            int64
 	AddonGSTRateBps          int64
 	EnabledPaymentMethods    []string
+	WhatsAppNumber           string // E.164; confirmed by the owner 2026-10-28 (B11)
 
 	// Initial hold time for unpaid orders (also seeds store_settings).
 	PendingOrderTTL time.Duration
@@ -55,6 +56,7 @@ func Load() (Config, error) {
 		ShippingPaise:            getInt("SHIPPING_PAISE", 0),
 		AddonGSTRateBps:          getInt("ADDON_GST_RATE_BPS", 1800),
 		EnabledPaymentMethods:    getList("ENABLED_PAYMENT_METHODS", "upi,card,netbanking,emi"),
+		WhatsAppNumber:           get("WHATSAPP_NUMBER", "+918084047949"),
 		PendingOrderTTL:          time.Duration(getInt("PENDING_ORDER_TTL_MINUTES", 30)) * time.Minute,
 		SweepInterval:            time.Minute,
 		StorefrontRevalidateURL:  get("STOREFRONT_REVALIDATE_URL", "http://localhost:3000/internal/revalidate"),

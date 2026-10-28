@@ -91,7 +91,7 @@ func (q *Queries) AdminUpsertAddon(ctx context.Context, arg AdminUpsertAddonPara
 
 const getStoreSettings = `-- name: GetStoreSettings :one
 SELECT s.white_glove_threshold_paise, s.shipping_paise, s.addon_gst_rate_bps, s.payment_methods,
-       s.pending_order_ttl_minutes, s.updated_at, coalesce(u.name, '')::text AS updated_by_name
+       s.pending_order_ttl_minutes, s.whatsapp_number, s.updated_at, coalesce(u.name, '')::text AS updated_by_name
 FROM store_settings s
 LEFT JOIN admin_users u ON u.id = s.updated_by
 `
@@ -102,6 +102,7 @@ type GetStoreSettingsRow struct {
 	AddonGstRateBps          int32
 	PaymentMethods           []string
 	PendingOrderTtlMinutes   int32
+	WhatsappNumber           string
 	UpdatedAt                pgtype.Timestamptz
 	UpdatedByName            string
 }
@@ -115,6 +116,7 @@ func (q *Queries) GetStoreSettings(ctx context.Context) (GetStoreSettingsRow, er
 		&i.AddonGstRateBps,
 		&i.PaymentMethods,
 		&i.PendingOrderTtlMinutes,
+		&i.WhatsappNumber,
 		&i.UpdatedAt,
 		&i.UpdatedByName,
 	)
@@ -122,8 +124,8 @@ func (q *Queries) GetStoreSettings(ctx context.Context) (GetStoreSettingsRow, er
 }
 
 const insertDefaultStoreSettings = `-- name: InsertDefaultStoreSettings :exec
-INSERT INTO store_settings (white_glove_threshold_paise, shipping_paise, addon_gst_rate_bps, payment_methods, pending_order_ttl_minutes)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO store_settings (white_glove_threshold_paise, shipping_paise, addon_gst_rate_bps, payment_methods, pending_order_ttl_minutes, whatsapp_number)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (id) DO NOTHING
 `
 
@@ -133,6 +135,7 @@ type InsertDefaultStoreSettingsParams struct {
 	AddonGstRateBps          int32
 	PaymentMethods           []string
 	PendingOrderTtlMinutes   int32
+	WhatsappNumber           string
 }
 
 func (q *Queries) InsertDefaultStoreSettings(ctx context.Context, arg InsertDefaultStoreSettingsParams) error {
@@ -142,12 +145,13 @@ func (q *Queries) InsertDefaultStoreSettings(ctx context.Context, arg InsertDefa
 		arg.AddonGstRateBps,
 		arg.PaymentMethods,
 		arg.PendingOrderTtlMinutes,
+		arg.WhatsappNumber,
 	)
 	return err
 }
 
 const lockStoreSettings = `-- name: LockStoreSettings :one
-SELECT id, white_glove_threshold_paise, shipping_paise, addon_gst_rate_bps, payment_methods, pending_order_ttl_minutes, updated_at, updated_by FROM store_settings FOR UPDATE
+SELECT id, white_glove_threshold_paise, shipping_paise, addon_gst_rate_bps, payment_methods, pending_order_ttl_minutes, updated_at, updated_by, whatsapp_number FROM store_settings FOR UPDATE
 `
 
 func (q *Queries) LockStoreSettings(ctx context.Context) (StoreSetting, error) {
@@ -162,6 +166,7 @@ func (q *Queries) LockStoreSettings(ctx context.Context) (StoreSetting, error) {
 		&i.PendingOrderTtlMinutes,
 		&i.UpdatedAt,
 		&i.UpdatedBy,
+		&i.WhatsappNumber,
 	)
 	return i, err
 }
@@ -169,7 +174,7 @@ func (q *Queries) LockStoreSettings(ctx context.Context) (StoreSetting, error) {
 const updateStoreSettings = `-- name: UpdateStoreSettings :exec
 UPDATE store_settings
 SET white_glove_threshold_paise = $1, shipping_paise = $2, addon_gst_rate_bps = $3, payment_methods = $4,
-    pending_order_ttl_minutes = $5, updated_by = $6, updated_at = now()
+    pending_order_ttl_minutes = $5, whatsapp_number = $6, updated_by = $7, updated_at = now()
 `
 
 type UpdateStoreSettingsParams struct {
@@ -178,6 +183,7 @@ type UpdateStoreSettingsParams struct {
 	AddonGstRateBps          int32
 	PaymentMethods           []string
 	PendingOrderTtlMinutes   int32
+	WhatsappNumber           string
 	UpdatedBy                pgtype.UUID
 }
 
@@ -188,6 +194,7 @@ func (q *Queries) UpdateStoreSettings(ctx context.Context, arg UpdateStoreSettin
 		arg.AddonGstRateBps,
 		arg.PaymentMethods,
 		arg.PendingOrderTtlMinutes,
+		arg.WhatsappNumber,
 		arg.UpdatedBy,
 	)
 	return err

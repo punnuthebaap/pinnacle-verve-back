@@ -264,4 +264,5 @@ type StoreSetting struct {
 	PendingOrderTtlMinutes   int32
 	UpdatedAt                pgtype.Timestamptz
 	UpdatedBy                pgtype.UUID
+	WhatsappNumber           string
 }

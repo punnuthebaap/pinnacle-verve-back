@@ -12,7 +12,7 @@ type storeSettings struct {
 	WhiteGloveThresholdPaise, ShippingPaise int64
 	AddonGstRateBps, PendingOrderTtlMinutes int
 	PaymentMethods, SupportedPaymentMethods []string
-	UpdatedBy                               string
+	WhatsappNumber, UpdatedBy               string
 }
 
 // Owners change commercial values and add-ons; carts, checkout options and new orders follow at once.
@@ -31,7 +31,8 @@ func TestAdminSettings(t *testing.T) {
 	var st storeSettings
 	owner.do("GET", "/admin/settings", "", nil, 200, &st)
 	if st.WhiteGloveThresholdPaise != 1_500_000 || st.ShippingPaise != 0 || st.AddonGstRateBps != 1800 || st.PendingOrderTtlMinutes != 30 ||
-		len(st.PaymentMethods) != 4 || slices.Contains(st.SupportedPaymentMethods, "cod") || st.UpdatedBy != "" {
+		len(st.PaymentMethods) != 4 || slices.Contains(st.SupportedPaymentMethods, "cod") || st.UpdatedBy != "" ||
+		st.WhatsappNumber != "+918084047949" {
 		t.Fatalf("defaults = %+v", st)
 	}
 
@@ -53,7 +54,7 @@ func TestAdminSettings(t *testing.T) {
 	shopper.do("PUT", "/cart/addons", "", map[string]any{"codes": []string{"white-glove-mount"}}, 200, &before)
 
 	// Schema-level rejections.
-	valid := map[string]any{"whiteGloveThresholdPaise": 2_000_000, "shippingPaise": 49_900, "addonGstRateBps": 1800, "paymentMethods": []string{"upi", "card", "upi"}, "pendingOrderTtlMinutes": 45}
+	valid := map[string]any{"whiteGloveThresholdPaise": 2_000_000, "shippingPaise": 49_900, "addonGstRateBps": 1800, "paymentMethods": []string{"upi", "card", "upi"}, "pendingOrderTtlMinutes": 45, "whatsappNumber": "+91-80840 47949"}
 	with := func(k string, v any) map[string]any {
 		m := map[string]any{}
 		for kk, vv := range valid {
@@ -66,11 +67,21 @@ func TestAdminSettings(t *testing.T) {
 	owner.do("PUT", "/admin/settings", "", with("paymentMethods", []string{"cod"}), 400, nil)
 	owner.do("PUT", "/admin/settings", "", with("pendingOrderTtlMinutes", 5), 400, nil)
 	owner.do("PUT", "/admin/settings", "", with("shippingPaise", -1), 400, nil)
+	owner.do("PUT", "/admin/settings", "", with("whatsappNumber", "8084047949"), 422, nil) // country code required
+	revalidatedBefore := s.revalidated.Load()
 
 	owner.do("PUT", "/admin/settings", "", valid, 200, &st)
 	if st.WhiteGloveThresholdPaise != 2_000_000 || st.ShippingPaise != 49_900 || !slices.Equal(st.PaymentMethods, []string{"upi", "card"}) ||
-		st.PendingOrderTtlMinutes != 45 || st.UpdatedBy != "Test owner" {
+		st.PendingOrderTtlMinutes != 45 || st.UpdatedBy != "Test owner" || st.WhatsappNumber != "+918084047949" {
 		t.Fatalf("after update = %+v", st)
+	}
+
+	// The storefront drops cached pages showing contact details.
+	waitFor(t, func() bool { return s.revalidated.Load() > revalidatedBefore })
+	var contact struct{ WhatsappNumber *string }
+	s.c.do("GET", "/contact", "", nil, 200, &contact)
+	if contact.WhatsappNumber == nil || *contact.WhatsappNumber != "+918084047949" {
+		t.Fatalf("contact = %+v", contact)
 	}
 
 	var opts struct {

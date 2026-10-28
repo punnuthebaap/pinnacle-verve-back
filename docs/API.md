@@ -43,7 +43,8 @@ Source of truth: [`openapi/openapi.yaml`](../openapi/openapi.yaml). This page co
   - `POST …/reinstate`: accepts a late capture (`attention: late_capture`) by re-reserving stock, all or nothing.
   - `POST …/notes {text}`: internal timeline note.
   - `attention` (view `order_attention`): `refund_due` | `late_capture` | `amount_mismatch` — money was taken but the order isn't going ahead.
-- **Settings** (owners): `GET/PUT /admin/settings` (white-glove threshold, shipping, add-on GST in bps, payment methods from `supportedPaymentMethods`, unpaid-order hold 10–1440 min; audited before/after). `GET /admin/addons`, `PUT /admin/addons/{code}` creates or updates an add-on (codes permanent; switch off instead of deleting). Changes apply to open carts and new orders immediately.
+- **Settings** (owners): `GET/PUT /admin/settings` (white-glove threshold, shipping, add-on GST in bps, payment methods from `supportedPaymentMethods`, unpaid-order hold 10–1440 min, contact `whatsappNumber` normalised to E.164 such as `+918084047949`, empty hides WhatsApp buttons; audited before/after; the storefront's `settings` cache tag is revalidated). Cash on delivery is not a payment method (removed 2026-10-28). `GET /admin/addons`, `PUT /admin/addons/{code}` creates or updates an add-on (codes permanent; switch off instead of deleting). Changes apply to open carts and new orders immediately.
+- Public `GET /contact` → `whatsappNumber` (absent when empty).
 - Public `GET /checkout-options` → enabled `paymentMethods` and `whiteGloveThresholdPaise` for the checkout page.
 
 ## Payment flow (M1: mock provider)

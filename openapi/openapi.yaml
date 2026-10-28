@@ -12,8 +12,10 @@ tags:
   - name: system
   - name: catalog
   - name: cart
+  - name: checkout
   - name: orders
   - name: payments
+  - name: content
   - name: marketing
   - name: admin
     description: Staff-only. Requires the pv_admin session cookie (path /api/v1/admin, SameSite=Strict) except for sign-in.
@@ -222,6 +224,21 @@ paths:
       responses:
         "200": { $ref: "#/components/responses/Cart" }
         "422": { $ref: "#/components/responses/Problem" }
+
+  /contact:
+    get:
+      tags: [content]
+      operationId: getContact
+      description: Public contact details set by owners in the admin (storefront caches this with tag "settings").
+      responses:
+        "200":
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  whatsappNumber: { type: string, description: "E.164, e.g. +918084047949; absent when not set." }
 
   /checkout-options:
     get:
@@ -1376,7 +1393,7 @@ components:
 
     StoreSettingsInput:
       type: object
-      required: [whiteGloveThresholdPaise, shippingPaise, addonGstRateBps, paymentMethods, pendingOrderTtlMinutes]
+      required: [whiteGloveThresholdPaise, shippingPaise, addonGstRateBps, paymentMethods, pendingOrderTtlMinutes, whatsappNumber]
       additionalProperties: false
       properties:
         whiteGloveThresholdPaise: { type: integer, format: int64, minimum: 0, maximum: 1000000000, description: Order subtotal from which white-glove delivery is free. }
@@ -1388,6 +1405,7 @@ components:
           maxItems: 4
           items: { type: string, enum: [upi, card, netbanking, emi] }
         pendingOrderTtlMinutes: { type: integer, minimum: 10, maximum: 1440, description: Unpaid orders are cancelled and their stock released after this long. }
+        whatsappNumber: { type: string, maxLength: 24, description: "Contact number for WhatsApp buttons, with country code (spaces/hyphens allowed; stored as +918084047949). Empty hides the buttons." }
 
     StoreSettings:
       allOf:
@@ -1399,7 +1417,7 @@ components:
             updatedBy: { type: string, description: Name of the admin who last changed the settings. }
             supportedPaymentMethods:
               type: array
-              description: Methods checkout implements (cash on delivery needs business rules first, ROADMAP B4).
+              description: Methods checkout implements.
               items: { $ref: "#/components/schemas/PaymentMethod" }
 
     AdminAddonInput:
@@ -1915,7 +1933,7 @@ components:
 
     PaymentMethod:
       type: string
-      enum: [upi, card, netbanking, emi, cod]
+      enum: [upi, card, netbanking, emi]
 
     CreateOrderRequest:
       type: object

@@ -65,7 +65,8 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 
 	q := store.New(pool)
 	adm := admin.NewService(q, log)
-	st := settings.NewService(pool, q, adm, settings.Defaults(cfg))
+	rv := catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log}
+	st := settings.NewService(pool, q, adm, rv, settings.Defaults(cfg))
 	srv := &httpapi.Server{
 		Pool:     pool,
 		Q:        q,
@@ -78,8 +79,7 @@ func New(cfg config.Config, log *slog.Logger, pool *pgxpool.Pool) (*App, error) 
 	}
 	srv.OrderAdmin = orderadmin.NewService(pool, q, srv.Admin)
 	media := storage.Local{Dir: cfg.MediaDir, URLPrefix: "/media"}
-	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin,
-		catalogadmin.HTTPRevalidator{URL: cfg.StorefrontRevalidateURL, Secret: cfg.RevalidateSecret, Log: log}, media)
+	srv.CatalogAdmin = catalogadmin.NewService(pool, q, srv.Admin, rv, media)
 
 	spec, err := api.GetSwagger()
 	if err != nil {

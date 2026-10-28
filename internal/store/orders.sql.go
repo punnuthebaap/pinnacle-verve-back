@@ -142,6 +142,32 @@ func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (P
 	return i, err
 }
 
+const getPaymentByProviderOrderID = `-- name: GetPaymentByProviderOrderID :one
+SELECT id, order_id, provider, provider_order_id, provider_payment_id, amount_paise, status, created_at, updated_at FROM payments WHERE provider = $1 AND provider_order_id = $2
+`
+
+type GetPaymentByProviderOrderIDParams struct {
+	Provider        string
+	ProviderOrderID string
+}
+
+func (q *Queries) GetPaymentByProviderOrderID(ctx context.Context, arg GetPaymentByProviderOrderIDParams) (Payment, error) {
+	row := q.db.QueryRow(ctx, getPaymentByProviderOrderID, arg.Provider, arg.ProviderOrderID)
+	var i Payment
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.Provider,
+		&i.ProviderOrderID,
+		&i.ProviderPaymentID,
+		&i.AmountPaise,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const insertNewsletterSubscriber = `-- name: InsertNewsletterSubscriber :exec
 INSERT INTO newsletter_subscribers (email) VALUES (lower($1::text))
 ON CONFLICT DO NOTHING

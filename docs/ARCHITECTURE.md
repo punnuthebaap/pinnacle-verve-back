@@ -54,4 +54,4 @@ Dependency direction: `httpapi → services (catalog|cart|order) → store`. Ser
 
 ## Known gaps (tracked in HANDOFF)
 
-Gateway call outside the DB transaction, rate limiting, coupons, CGST/SGST split.
+Coupons, CGST/SGST split, shared rate-limit store for multi-instance deploys (B9).

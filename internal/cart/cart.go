@@ -13,10 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/pinnacleverve/api/internal/catalog"
-	"github.com/pinnacleverve/api/internal/platform/config"
 	"github.com/pinnacleverve/api/internal/platform/database"
 	"github.com/pinnacleverve/api/internal/platform/session"
 	"github.com/pinnacleverve/api/internal/pricing"
+	"github.com/pinnacleverve/api/internal/settings"
 	"github.com/pinnacleverve/api/internal/store"
 )
 
@@ -51,13 +51,13 @@ type Cart struct {
 }
 
 type Service struct {
-	pool *pgxpool.Pool
-	q    *store.Queries
-	cfg  config.Config
+	pool     *pgxpool.Pool
+	q        *store.Queries
+	settings *settings.Service
 }
 
-func NewService(pool *pgxpool.Pool, q *store.Queries, cfg config.Config) *Service {
-	return &Service{pool: pool, q: q, cfg: cfg}
+func NewService(pool *pgxpool.Pool, q *store.Queries, st *settings.Service) *Service {
+	return &Service{pool: pool, q: q, settings: st}
 }
 
 // Persister adapts the store for session.Middleware.
@@ -68,18 +68,22 @@ func Persister(q *store.Queries) session.Persister {
 }
 
 func (s *Service) Get(ctx context.Context) (Cart, error) {
+	rules, err := s.settings.Current(ctx, s.q)
+	if err != nil {
+		return Cart{}, err
+	}
 	sid := session.ID(ctx)
 	if sid == nil {
-		return s.empty(), nil
+		return Build(uuid.Nil, nil, nil, rules), nil
 	}
 	row, err := s.q.GetCartBySession(ctx, sid)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return s.empty(), nil
+		return Build(uuid.Nil, nil, nil, rules), nil
 	}
 	if err != nil {
 		return Cart{}, err
 	}
-	return Load(ctx, s.q, row, s.cfg)
+	return Load(ctx, s.q, row, rules)
 }
 
 func (s *Service) Add(ctx context.Context, variantID uuid.UUID, qty int) (Cart, error) {
@@ -205,10 +209,8 @@ func (s *Service) existingCart(ctx context.Context) (uuid.UUID, error) {
 	return row.ID, err
 }
 
-func (s *Service) empty() Cart { return Build(uuid.Nil, nil, nil, s.cfg) }
-
 // Load reads a cart's lines and add-ons with q (which may be transaction-bound) and prices them.
-func Load(ctx context.Context, q *store.Queries, c store.GetCartBySessionRow, cfg config.Config) (Cart, error) {
+func Load(ctx context.Context, q *store.Queries, c store.GetCartBySessionRow, rules settings.Commercial) (Cart, error) {
 	rows, err := q.ListCartLines(ctx, c.ID)
 	if err != nil {
 		return Cart{}, err
@@ -219,18 +221,18 @@ func Load(ctx context.Context, q *store.Queries, c store.GetCartBySessionRow, cf
 			return Cart{}, err
 		}
 	}
-	out := Build(c.ID, rows, addons, cfg)
+	out := Build(c.ID, rows, addons, rules)
 	out.Notes = c.Notes
 	return out, nil
 }
 
 // Build prices cart rows. It is pure so order creation prices exactly what the cart showed.
-func Build(cartID uuid.UUID, rows []store.ListCartLinesRow, addons []Addon, cfg config.Config) Cart {
-	c := Cart{ID: cartID, Lines: []Line{}, Addons: addons, WhiteGloveThreshold: cfg.WhiteGloveThresholdPaise}
+func Build(cartID uuid.UUID, rows []store.ListCartLinesRow, addons []Addon, rules settings.Commercial) Cart {
+	c := Cart{ID: cartID, Lines: []Line{}, Addons: addons, WhiteGloveThreshold: rules.WhiteGloveThresholdPaise}
 	if c.Addons == nil {
 		c.Addons = []Addon{}
 	}
-	in := pricing.Input{AddonGSTRateBps: cfg.AddonGSTRateBps, ShippingPaise: cfg.ShippingPaise}
+	in := pricing.Input{AddonGSTRateBps: rules.AddonGSTRateBps, ShippingPaise: rules.ShippingPaise}
 	for _, r := range rows {
 		l := pricing.Line{UnitPaise: r.PricePaise, Quantity: int64(r.Quantity), GSTRateBps: int64(r.GstRateBps)}
 		in.Lines = append(in.Lines, l)
@@ -246,6 +248,6 @@ func Build(cartID uuid.UUID, rows []store.ListCartLinesRow, addons []Addon, cfg 
 		in.AddonPaise = append(in.AddonPaise, a.PricePaise)
 	}
 	c.Totals = pricing.Compute(in)
-	c.WhiteGloveRemaining = pricing.Remaining(c.Totals.SubtotalPaise, cfg.WhiteGloveThresholdPaise)
+	c.WhiteGloveRemaining = pricing.Remaining(c.Totals.SubtotalPaise, rules.WhiteGloveThresholdPaise)
 	return c
 }

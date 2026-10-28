@@ -20,13 +20,14 @@ type Config struct {
 	PaymentProvider   string // mock | razorpay
 	MockWebhookSecret string
 
-	// Commercial values not yet confirmed by the business (see ROADMAP B4); keep configurable.
+	// Initial commercial values (ROADMAP B4). They seed the store_settings row on first use; after that
+	// owners change them in the admin (package settings) and these are only used after a dev reseed.
 	WhiteGloveThresholdPaise int64
 	ShippingPaise            int64
 	AddonGSTRateBps          int64
 	EnabledPaymentMethods    []string
 
-	// Unpaid orders are cancelled and their stock released after this long.
+	// Initial hold time for unpaid orders (also seeds store_settings).
 	PendingOrderTTL time.Duration
 	SweepInterval   time.Duration
 

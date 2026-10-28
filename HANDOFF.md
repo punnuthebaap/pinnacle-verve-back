@@ -32,7 +32,8 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A2a catalogue API: categories + filters, products (all content fields), variants (validated options, SKU/combination uniqueness, deactivate-not-delete), filter values, pairings; audit in the same transaction; storefront revalidation after each write. Test `TestAdminCatalog`.
 - ✅ A2b images: `internal/storage` (local disk, `MEDIA_DIR`), upload/reorder/alt/delete endpoints, `/media/*` serving, per-route body cap (migration 00005). Test `TestAdminImages`.
 - ✅ A3 orders: `internal/orderadmin`, list/queues/search, detail + timeline, fulfilment with tracking (shown to shoppers), cancel, refund records, late-capture reinstatement, notes (migration 00006, view `order_attention`). Test `TestAdminOrders`.
-- ⬜ A4 settings → A5 reviews/newsletter → A6 content.
+- ✅ A4 settings: `internal/settings`, `store_settings` row (migration 00007) replacing env values at runtime, add-on editing, public `/checkout-options`; cart/order/sweeper read settings per request. Test `TestAdminSettings`.
+- ⬜ A5 reviews/newsletter → A6 content.
 
 ## Known issues / gaps
 
@@ -50,7 +51,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. A4 settings: move commercial values (white-glove threshold, shipping, add-on GST, payment methods, pending TTL) from env to an audited settings table editable by owners.
+1. A5: review moderation (approve/hide, reply) and newsletter subscriber list/export; A6 content (homepage, navigation, category texts, legal pages).
 2. S3/R2 `storage.Store` implementation when hosting is chosen (B9).
 2. Move the gateway order call after commit (with retry) before Razorpay goes live.
 3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

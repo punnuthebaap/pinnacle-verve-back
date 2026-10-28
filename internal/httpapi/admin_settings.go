@@ -35,10 +35,18 @@ func (s *Server) GetCheckoutOptions(ctx context.Context, _ api.GetCheckoutOption
 	return out, nil
 }
 
+func (s *Server) GetContact(ctx context.Context, _ api.GetContactRequestObject) (api.GetContactResponseObject, error) {
+	rules, err := s.Settings.Current(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return api.GetContact200JSONResponse{WhatsappNumber: nonEmpty(rules.WhatsAppNumber)}, nil
+}
+
 func settingsJSON(st settings.Settings) api.StoreSettingsJSONResponse {
 	out := api.StoreSettingsJSONResponse{
 		WhiteGloveThresholdPaise: st.WhiteGloveThresholdPaise, ShippingPaise: st.ShippingPaise, AddonGstRateBps: int(st.AddonGSTRateBps),
-		PendingOrderTtlMinutes: int(st.PendingOrderTTL.Minutes()), UpdatedAt: st.UpdatedAt, UpdatedBy: nonEmpty(st.UpdatedBy),
+		PendingOrderTtlMinutes: int(st.PendingOrderTTL.Minutes()), WhatsappNumber: st.WhatsAppNumber, UpdatedAt: st.UpdatedAt, UpdatedBy: nonEmpty(st.UpdatedBy),
 		PaymentMethods: []api.StoreSettingsPaymentMethods{}, SupportedPaymentMethods: []api.PaymentMethod{},
 	}
 	for _, m := range st.PaymentMethods {
@@ -65,7 +73,7 @@ func (s *Server) AdminUpdateSettings(ctx context.Context, r api.AdminUpdateSetti
 	b := r.Body
 	in := settings.Commercial{
 		WhiteGloveThresholdPaise: b.WhiteGloveThresholdPaise, ShippingPaise: b.ShippingPaise, AddonGSTRateBps: int64(b.AddonGstRateBps),
-		PendingOrderTTL: time.Duration(b.PendingOrderTtlMinutes) * time.Minute,
+		PendingOrderTTL: time.Duration(b.PendingOrderTtlMinutes) * time.Minute, WhatsAppNumber: b.WhatsappNumber,
 	}
 	for _, m := range b.PaymentMethods {
 		in.PaymentMethods = append(in.PaymentMethods, string(m))

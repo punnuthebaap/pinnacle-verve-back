@@ -1,6 +1,7 @@
 // Package settings holds the store's commercial values (phase A4): the free white-glove threshold,
-// shipping charge, add-on GST rate, enabled payment methods and how long unpaid orders are held, plus the
-// service add-ons. Owners edit them in the admin; every change is audited with its before/after values.
+// shipping charge, add-on GST rate, enabled payment methods, how long unpaid orders are held and the
+// contact WhatsApp number, plus the service add-ons. Owners edit them in the admin; every change is
+// audited with its before/after values.
 //
 // The values live in one database row, created on first use from the environment defaults. Pricing reads
 // them per request (a primary-key lookup), so every instance applies a change immediately.
@@ -25,8 +26,8 @@ import (
 	"github.com/pinnacleverve/api/internal/store"
 )
 
-// PaymentMethods are the methods checkout implements. Cash on delivery needs business rules first
-// (advance token, limits; ROADMAP B4), so it can't be enabled here yet.
+// PaymentMethods are the methods checkout implements. Cash on delivery is off the table for now
+// (owner, 2026-10-28).
 var PaymentMethods = []string{"upi", "card", "netbanking", "emi"}
 
 // InvalidError is a business-rule violation with a message an admin can act on.
@@ -42,6 +43,7 @@ type Commercial struct {
 	AddonGSTRateBps          int64
 	PaymentMethods           []string
 	PendingOrderTTL          time.Duration
+	WhatsAppNumber           string // E.164 (+918084047949); empty hides WhatsApp CTAs
 }
 
 type Settings struct {
@@ -58,18 +60,23 @@ func Defaults(cfg config.Config) Commercial {
 		AddonGSTRateBps:          cfg.AddonGSTRateBps,
 		PaymentMethods:           cfg.EnabledPaymentMethods,
 		PendingOrderTTL:          cfg.PendingOrderTTL,
+		WhatsAppNumber:           cfg.WhatsAppNumber,
 	}
 }
+
+// Revalidator tells the storefront that cached pages using the given tags are stale.
+type Revalidator interface{ Revalidate(tags ...string) }
 
 type Service struct {
 	pool     *pgxpool.Pool
 	q        *store.Queries
 	audit    *admin.Service
+	rv       Revalidator
 	defaults Commercial
 }
 
-func NewService(pool *pgxpool.Pool, q *store.Queries, audit *admin.Service, defaults Commercial) *Service {
-	return &Service{pool: pool, q: q, audit: audit, defaults: defaults}
+func NewService(pool *pgxpool.Pool, q *store.Queries, audit *admin.Service, rv Revalidator, defaults Commercial) *Service {
+	return &Service{pool: pool, q: q, audit: audit, rv: rv, defaults: defaults}
 }
 
 // Current returns the values in force, reading with q (which may be transaction-bound; nil = pool).
@@ -87,7 +94,7 @@ func (s *Service) read(ctx context.Context, q *store.Queries) (Settings, error) 
 		d := s.defaults
 		if err := q.InsertDefaultStoreSettings(ctx, store.InsertDefaultStoreSettingsParams{
 			WhiteGloveThresholdPaise: d.WhiteGloveThresholdPaise, ShippingPaise: d.ShippingPaise, AddonGstRateBps: int32(d.AddonGSTRateBps),
-			PaymentMethods: d.PaymentMethods, PendingOrderTtlMinutes: int32(d.PendingOrderTTL.Minutes()),
+			PaymentMethods: d.PaymentMethods, PendingOrderTtlMinutes: int32(d.PendingOrderTTL.Minutes()), WhatsappNumber: d.WhatsAppNumber,
 		}); err != nil {
 			return Settings{}, err
 		}
@@ -100,6 +107,7 @@ func (s *Service) read(ctx context.Context, q *store.Queries) (Settings, error) 
 		Commercial: Commercial{
 			WhiteGloveThresholdPaise: row.WhiteGloveThresholdPaise, ShippingPaise: row.ShippingPaise, AddonGSTRateBps: int64(row.AddonGstRateBps),
 			PaymentMethods: row.PaymentMethods, PendingOrderTTL: time.Duration(row.PendingOrderTtlMinutes) * time.Minute,
+			WhatsAppNumber: row.WhatsappNumber,
 		},
 		UpdatedAt: row.UpdatedAt.Time, UpdatedBy: row.UpdatedByName,
 	}, nil
@@ -130,6 +138,9 @@ func validate(c Commercial) (Commercial, error) {
 		return c, invalid("The add-on GST rate must be between 0%% and 40%%.")
 	case c.PendingOrderTTL < 10*time.Minute || c.PendingOrderTTL > 24*time.Hour || c.PendingOrderTTL%time.Minute != 0:
 		return c, invalid("Unpaid orders must be held for a whole number of minutes between 10 and 1,440.")
+	}
+	if c.WhatsAppNumber = NormalizePhone(c.WhatsAppNumber); c.WhatsAppNumber != "" && !e164.MatchString(c.WhatsAppNumber) {
+		return c, invalid("Enter the WhatsApp number with its country code, e.g. +91 80840 47949 (or leave it empty to hide WhatsApp buttons).")
 	}
 	methods := []string{}
 	for _, m := range c.PaymentMethods {
@@ -167,7 +178,7 @@ func (s *Service) Update(ctx context.Context, in Commercial) (Settings, error) {
 		}
 		if err := q.UpdateStoreSettings(ctx, store.UpdateStoreSettingsParams{
 			WhiteGloveThresholdPaise: in.WhiteGloveThresholdPaise, ShippingPaise: in.ShippingPaise, AddonGstRateBps: int32(in.AddonGSTRateBps),
-			PaymentMethods: in.PaymentMethods, PendingOrderTtlMinutes: int32(in.PendingOrderTTL.Minutes()),
+			PaymentMethods: in.PaymentMethods, PendingOrderTtlMinutes: int32(in.PendingOrderTTL.Minutes()), WhatsappNumber: in.WhatsAppNumber,
 			UpdatedBy: pgtype.UUID{Bytes: me.ID, Valid: true},
 		}); err != nil {
 			return err
@@ -176,10 +187,12 @@ func (s *Service) Update(ctx context.Context, in Commercial) (Settings, error) {
 			"before": map[string]any{
 				"whiteGloveThresholdPaise": before.WhiteGloveThresholdPaise, "shippingPaise": before.ShippingPaise,
 				"addonGstRateBps": before.AddonGstRateBps, "paymentMethods": before.PaymentMethods, "pendingOrderTtlMinutes": before.PendingOrderTtlMinutes,
+				"whatsappNumber": before.WhatsappNumber,
 			},
 			"after": map[string]any{
 				"whiteGloveThresholdPaise": in.WhiteGloveThresholdPaise, "shippingPaise": in.ShippingPaise,
 				"addonGstRateBps": in.AddonGSTRateBps, "paymentMethods": in.PaymentMethods, "pendingOrderTtlMinutes": int(in.PendingOrderTTL.Minutes()),
+				"whatsappNumber": in.WhatsAppNumber,
 			},
 		})
 		return nil
@@ -187,7 +200,20 @@ func (s *Service) Update(ctx context.Context, in Commercial) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	s.rv.Revalidate("settings") // storefront pages showing contact details
 	return s.read(ctx, nil)
+}
+
+var e164 = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
+
+// NormalizePhone strips the spaces, hyphens, dots and brackets people type: "+91-80840 47949" → "+918084047949".
+func NormalizePhone(s string) string {
+	return strings.Map(func(r rune) rune {
+		if strings.ContainsRune(" -.()", r) {
+			return -1
+		}
+		return r
+	}, strings.TrimSpace(s))
 }
 
 // ---- add-ons ----

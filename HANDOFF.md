@@ -33,6 +33,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A2b images: `internal/storage` (local disk, `MEDIA_DIR`), upload/reorder/alt/delete endpoints, `/media/*` serving, per-route body cap (migration 00005). Test `TestAdminImages`.
 - ✅ A3 orders: `internal/orderadmin`, list/queues/search, detail + timeline, fulfilment with tracking (shown to shoppers), cancel, refund records, late-capture reinstatement, notes (migration 00006, view `order_attention`). Test `TestAdminOrders`.
 - ✅ A4 settings: `internal/settings`, `store_settings` row (migration 00007) replacing env values at runtime, add-on editing, public `/checkout-options`; cart/order/sweeper read settings per request. Test `TestAdminSettings`.
+- ✅ Contact WhatsApp number as a setting (migration 00008, default `+918084047949` confirmed by the owner 2026-10-28), public `/contact`, settings changes revalidate storefront tag `settings`. Cash on delivery removed from the API.
 - ⬜ A5 reviews/newsletter → A6 content.
 
 ## Known issues / gaps

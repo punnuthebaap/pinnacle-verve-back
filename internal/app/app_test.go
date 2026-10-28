@@ -28,6 +28,7 @@ type stack struct {
 	pool        *pgxpool.Pool
 	c           *client
 	revalidated *atomic.Int32 // storefront revalidation calls received
+	mediaDir    string
 }
 
 // newStack uses TEST_DATABASE_URL (default: local dev cluster, database pinnacle_test, created if missing).
@@ -63,6 +64,7 @@ func newStack(t *testing.T) *stack {
 	}))
 	t.Cleanup(storefront.Close)
 	cfg.StorefrontRevalidateURL = storefront.URL
+	cfg.MediaDir = t.TempDir()
 	a, err := New(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), pool)
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +72,7 @@ func newStack(t *testing.T) *stack {
 	srv := httptest.NewServer(a.Handler)
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
-	return &stack{app: a, pool: pool, revalidated: &revalidated, c: &client{t: t, base: srv.URL + "/api/v1", origin: "http://localhost:3000", http: &http.Client{Jar: jar}}}
+	return &stack{app: a, pool: pool, revalidated: &revalidated, mediaDir: cfg.MediaDir, c: &client{t: t, base: srv.URL + "/api/v1", origin: "http://localhost:3000", http: &http.Client{Jar: jar}}}
 }
 
 var checkoutBody = map[string]any{

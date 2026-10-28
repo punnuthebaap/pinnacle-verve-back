@@ -87,15 +87,15 @@ func Observe(log *slog.Logger) Middleware {
 	}
 }
 
-// Harden sets baseline security headers and caps request bodies.
-func Harden(maxBody int64) Middleware {
+// Harden sets baseline security headers and caps request bodies (limit decides the cap per request).
+func Harden(limit func(*http.Request) int64) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h := w.Header()
 			h.Set("X-Content-Type-Options", "nosniff")
 			h.Set("X-Frame-Options", "DENY")
 			h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
-			r.Body = http.MaxBytesReader(w, r.Body, maxBody)
+			r.Body = http.MaxBytesReader(w, r.Body, limit(r))
 			next.ServeHTTP(w, r)
 		})
 	}

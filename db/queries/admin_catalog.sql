@@ -101,3 +101,17 @@ INSERT INTO product_relations (product_id, related_id, position) VALUES ($1, $2,
 
 -- name: AdminListProductImages :many
 SELECT id, url, alt, position FROM product_images WHERE product_id = $1 ORDER BY position, id;
+
+-- name: AdminCountProductImages :one
+SELECT count(*)::int FROM product_images WHERE product_id = $1;
+
+-- name: AdminInsertProductImage :one
+INSERT INTO product_images (product_id, url, alt, storage_key, position)
+VALUES ($1, $2, $3, $4, (SELECT coalesce(max(position), -1) + 1 FROM product_images WHERE product_id = $1))
+RETURNING id;
+
+-- name: AdminUpdateProductImage :execrows
+UPDATE product_images SET alt = $3, position = $4 WHERE id = $1 AND product_id = $2;
+
+-- name: AdminDeleteProductImage :one
+DELETE FROM product_images WHERE id = $1 AND product_id = $2 RETURNING storage_key;

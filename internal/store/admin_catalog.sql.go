@@ -13,6 +13,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminCountProductImages = `-- name: AdminCountProductImages :one
+SELECT count(*)::int FROM product_images WHERE product_id = $1
+`
+
+func (q *Queries) AdminCountProductImages(ctx context.Context, productID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, adminCountProductImages, productID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const adminDeactivateVariantsNotIn = `-- name: AdminDeactivateVariantsNotIn :exec
 UPDATE product_variants SET is_active = false WHERE product_id = $1 AND NOT (id = ANY($2::uuid[]))
 `
@@ -44,6 +55,22 @@ DELETE FROM category_facets WHERE category_id = $1
 func (q *Queries) AdminDeleteCategoryFacets(ctx context.Context, categoryID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, adminDeleteCategoryFacets, categoryID)
 	return err
+}
+
+const adminDeleteProductImage = `-- name: AdminDeleteProductImage :one
+DELETE FROM product_images WHERE id = $1 AND product_id = $2 RETURNING storage_key
+`
+
+type AdminDeleteProductImageParams struct {
+	ID        uuid.UUID
+	ProductID uuid.UUID
+}
+
+func (q *Queries) AdminDeleteProductImage(ctx context.Context, arg AdminDeleteProductImageParams) (string, error) {
+	row := q.db.QueryRow(ctx, adminDeleteProductImage, arg.ID, arg.ProductID)
+	var storage_key string
+	err := row.Scan(&storage_key)
+	return storage_key, err
 }
 
 const adminDeleteRelations = `-- name: AdminDeleteRelations :exec
@@ -239,6 +266,31 @@ func (q *Queries) AdminInsertProduct(ctx context.Context, arg AdminInsertProduct
 		arg.GstRateBps,
 		arg.Rank,
 		arg.IsActive,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const adminInsertProductImage = `-- name: AdminInsertProductImage :one
+INSERT INTO product_images (product_id, url, alt, storage_key, position)
+VALUES ($1, $2, $3, $4, (SELECT coalesce(max(position), -1) + 1 FROM product_images WHERE product_id = $1))
+RETURNING id
+`
+
+type AdminInsertProductImageParams struct {
+	ProductID  uuid.UUID
+	Url        string
+	Alt        string
+	StorageKey string
+}
+
+func (q *Queries) AdminInsertProductImage(ctx context.Context, arg AdminInsertProductImageParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, adminInsertProductImage,
+		arg.ProductID,
+		arg.Url,
+		arg.Alt,
+		arg.StorageKey,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -655,6 +707,30 @@ func (q *Queries) AdminUpdateProduct(ctx context.Context, arg AdminUpdateProduct
 		arg.IsActive,
 	)
 	return err
+}
+
+const adminUpdateProductImage = `-- name: AdminUpdateProductImage :execrows
+UPDATE product_images SET alt = $3, position = $4 WHERE id = $1 AND product_id = $2
+`
+
+type AdminUpdateProductImageParams struct {
+	ID        uuid.UUID
+	ProductID uuid.UUID
+	Alt       string
+	Position  int32
+}
+
+func (q *Queries) AdminUpdateProductImage(ctx context.Context, arg AdminUpdateProductImageParams) (int64, error) {
+	result, err := q.db.Exec(ctx, adminUpdateProductImage,
+		arg.ID,
+		arg.ProductID,
+		arg.Alt,
+		arg.Position,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const adminUpsertVariant = `-- name: AdminUpsertVariant :exec

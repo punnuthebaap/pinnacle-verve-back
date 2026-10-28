@@ -355,6 +355,7 @@ paths:
               schema: { $ref: "#/components/schemas/OrderCreated" }
         "409": { $ref: "#/components/responses/Problem" }
         "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
 
   /orders/{ref}:
     get:

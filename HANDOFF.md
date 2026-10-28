@@ -37,23 +37,24 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A5: `internal/marketing`, review moderation with rating recompute (migration 00009: moderated_at/by), newsletter list, CSV export (formula-safe, audited) and removal. Test `TestAdminMarketing`. Tests reset staff with `resetAdmins` (no TRUNCATE CASCADE: it would wipe reviews/order events that reference admins).
 - ✅ A6: `internal/content` (migration 00010: content_documents, content_pages), public content endpoints, link allow-list. Tests `TestAdminContent`, `TestCheckLinks`. The admin panel phases A1–A6 are complete.
 
+## M7 hardening
+
+- ✅ Per-IP rate limits (`internal/platform/ratelimit`): sign-in 20/min, newsletter 10/min, orders 20/min, mock payments 30/min, cart writes 120/min, image uploads 120/min → 429 + Retry-After. `RATE_LIMIT_ENABLED`, `TRUSTED_PROXIES`. Tests `TestLimiterWindows`, `TestClientIP`, `TestRateLimits`.
+- ✅ Gateway order created **after** the order transaction commits (only the order row is locked during the call); on failure the order is removed and stock released → `503 payment_gateway_unavailable`, and the same checkout can be retried. Test `TestGatewayFailureAtCheckout`.
+
 ## Known issues / gaps
 
-- Admin sign-in has no 2FA (owner decision); add IP-based rate limiting for password spraying in M7.
-
+- Admin sign-in has no 2FA (owner decision); it is throttled per IP (20/min) on top of the per-account lockout.
+- **Deployment requirement**: per-IP limits key on X-Forwarded-For, trusted only from `TRUSTED_PROXIES`. The storefront forwards a client-supplied X-Forwarded-For unchanged, so put a load balancer/edge proxy in front that appends the real client address (standard behaviour), and add the storefront's address to `TRUSTED_PROXIES`. Limits are per instance (in memory); use a shared store when running several instances (B9).
 - Public review submission not built: who may review (anyone, moderated; or verified buyers only) is an owner decision (M5). Moderation is ready for it.
 - Contour spec accordion: only "Materials & Glass Provenance" has copy; the other three sections are collapsed in Figma (B6).
 - Refunds are recorded, not issued: staff refund in the gateway dashboard and enter the reference (full refunds only; partial refunds/returns need business rules). Automate with Razorpay (B1).
 - No customer emails on dispatch/cancellation yet (needs an email provider and approved copy).
 - Admin actions lock the order row before payment rows (same order as the expiry sweeper); the webhook path locks payments first, so a simultaneous webhook and admin action can deadlock — Postgres aborts one and it can be retried. Unify lock order with the Razorpay work.
-- Gateway order creation runs inside the DB transaction (fine for mock; move after commit for Razorpay).
-- No rate limiting yet (newsletter, cart, orders) — M7.
 - Discounts/coupons not implemented; GST is one "included" figure (CGST/SGST split blocked by B3).
 - `ListProducts` returns `total=0` when the requested page is beyond the last page (window count).
 
 ## Next steps (in order)
 
-1. M7 hardening: rate limiting (sign-in, newsletter, cart, orders), gateway order call after commit, security headers, observability.
-2. S3/R2 `storage.Store` implementation when hosting is chosen (B9).
-2. Move the gateway order call after commit (with retry) before Razorpay goes live.
-3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.
+1. S3/R2 `storage.Store` implementation and a shared rate-limit store when hosting is chosen (B9).
+2. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

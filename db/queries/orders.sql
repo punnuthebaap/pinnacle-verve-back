@@ -76,3 +76,11 @@ FOR UPDATE SKIP LOCKED;
 
 -- name: ExpireOrderPayments :exec
 UPDATE payments SET status = 'expired', updated_at = now() WHERE order_id = $1 AND status = 'created';
+
+-- name: LockOrder :one
+SELECT * FROM orders WHERE id = $1 FOR UPDATE;
+
+-- An order whose gateway order could not be created is removed (its stock released first) so the shopper
+-- can retry with the same idempotency key.
+-- name: DeleteOrder :exec
+DELETE FROM orders WHERE id = $1;

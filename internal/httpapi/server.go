@@ -68,6 +68,7 @@ var (
 	pUnavailable   = problem(409, "item_unavailable", "An item in your bag is no longer available")
 	pMethod        = problem(422, "payment_method_unavailable", "This payment method is not available yet")
 	pDuplicate     = problem(409, "duplicate_request", "This order is already being processed")
+	pGateway       = problem(503, "payment_gateway_unavailable", "The payment service is unavailable right now. Your bag is saved; please try again in a moment.")
 	pBadSignature  = problem(401, "invalid_signature", "Invalid webhook signature")
 	pUnavailableDB = problem(503, "unavailable", "Service unavailable")
 )

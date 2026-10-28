@@ -1,6 +1,7 @@
 // Package order converts carts into orders and applies payment outcomes from gateway webhooks.
 //
-// Lifecycle: create → status=pending_payment, payment=pending, stock reserved.
+// Lifecycle: create → status=pending_payment, payment=pending, stock reserved (committed), then the
+// gateway order is created outside that transaction (see ensurePayment).
 // Captured webhook → placed/paid, cart cleared. Failed webhook → cancelled/failed, stock released.
 // Fulfilment status advances independently (admin operations, package orderadmin).
 package order
@@ -30,14 +31,15 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("order: not found")
-	ErrEmptyCart         = errors.New("order: cart is empty")
-	ErrUnavailable       = errors.New("order: an item is no longer available")
-	ErrOutOfStock        = errors.New("order: insufficient stock")
-	ErrMethodUnavailable = errors.New("order: payment method unavailable")
-	ErrDuplicateInFlight = errors.New("order: duplicate request in progress")
-	ErrUnknownProvider   = errors.New("order: unknown payment provider")
-	ErrMockNotEnabled    = errors.New("order: mock payments disabled")
+	ErrNotFound           = errors.New("order: not found")
+	ErrEmptyCart          = errors.New("order: cart is empty")
+	ErrUnavailable        = errors.New("order: an item is no longer available")
+	ErrOutOfStock         = errors.New("order: insufficient stock")
+	ErrMethodUnavailable  = errors.New("order: payment method unavailable")
+	ErrDuplicateInFlight  = errors.New("order: duplicate request in progress")
+	ErrUnknownProvider    = errors.New("order: unknown payment provider")
+	ErrMockNotEnabled     = errors.New("order: mock payments disabled")
+	ErrGatewayUnavailable = errors.New("order: payment gateway unavailable")
 )
 
 type Address struct {
@@ -96,6 +98,7 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 		return View{}, err
 	}
 	var orderID uuid.UUID
+	created := false
 	err = database.InTx(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		id, err := q.GetOrderIDByIdempotencyKey(ctx, store.GetOrderIDByIdempotencyKeyParams{SessionID: sid, IdempotencyKey: idemKey})
@@ -103,6 +106,7 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 			orderID = id // replay: return the original order
 			return nil
 		}
+		created = true
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return err
 		}
@@ -116,7 +120,57 @@ func (s *Service) Create(ctx context.Context, idemKey string, in CreateInput) (V
 	if err != nil {
 		return View{}, err
 	}
+	if err := s.ensurePayment(ctx, orderID); err != nil {
+		if created {
+			if derr := s.discard(ctx, orderID); derr != nil {
+				s.log.Error("discard order after gateway failure", "order_id", orderID, "err", derr)
+			}
+		}
+		return View{}, err
+	}
 	return Load(ctx, s.q, orderID)
+}
+
+// ensurePayment creates the gateway order once per order. It runs after the order transaction has
+// committed, so stock rows are not locked during the network call; only this order's row is locked,
+// which serialises concurrent replays of the same checkout.
+func (s *Service) ensurePayment(ctx context.Context, orderID uuid.UUID) error {
+	return database.InTx(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		o, err := q.LockOrder(ctx, orderID)
+		if err != nil {
+			return err
+		}
+		if _, err := q.GetPaymentByOrderID(ctx, orderID); err == nil || !errors.Is(err, pgx.ErrNoRows) {
+			return err // already has one (or a real error)
+		}
+		ps, err := s.active.CreateOrder(ctx, o.Ref, o.TotalPaise)
+		if err != nil {
+			s.log.Error("create gateway order", "order_id", orderID, "err", err)
+			return fmt.Errorf("%w: %v", ErrGatewayUnavailable, err)
+		}
+		return q.InsertPayment(ctx, store.InsertPaymentParams{
+			OrderID: orderID, Provider: ps.Provider, ProviderOrderID: ps.ProviderOrderID, AmountPaise: o.TotalPaise,
+		})
+	})
+}
+
+// discard removes an order whose gateway order couldn't be created, releasing its stock, so the shopper
+// can simply try again (with the same idempotency key).
+func (s *Service) discard(ctx context.Context, orderID uuid.UUID) error {
+	return database.InTx(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		if _, err := q.LockOrder(ctx, orderID); err != nil {
+			return err
+		}
+		if _, err := q.GetPaymentByOrderID(ctx, orderID); err == nil {
+			return nil // a concurrent replay succeeded after all
+		}
+		if err := q.ReleaseOrderStock(ctx, orderID); err != nil {
+			return err
+		}
+		return q.DeleteOrder(ctx, orderID)
+	})
 }
 
 func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idemKey string, in CreateInput, rules settings.Commercial) (uuid.UUID, error) {
@@ -177,17 +231,6 @@ func (s *Service) create(ctx context.Context, q *store.Queries, sid []byte, idem
 		}); err != nil {
 			return uuid.Nil, err
 		}
-	}
-	// NOTE: the gateway call happens inside the transaction for atomicity. With a real gateway, move it
-	// after commit (with retry) to avoid holding stock row locks during network I/O — tracked in HANDOFF.
-	ps, err := s.active.CreateOrder(ctx, ref, c.Totals.TotalPaise)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("create gateway order: %w", err)
-	}
-	if err := q.InsertPayment(ctx, store.InsertPaymentParams{
-		OrderID: orderID, Provider: ps.Provider, ProviderOrderID: ps.ProviderOrderID, AmountPaise: c.Totals.TotalPaise,
-	}); err != nil {
-		return uuid.Nil, err
 	}
 	return orderID, event(ctx, q, orderID, "order_created", map[string]any{"total_paise": c.Totals.TotalPaise})
 }

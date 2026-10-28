@@ -89,6 +89,22 @@ type CategoryFacet struct {
 	Position   int32
 }
 
+type ContentDocument struct {
+	Key       string
+	Data      json.RawMessage
+	UpdatedAt pgtype.Timestamptz
+	UpdatedBy pgtype.UUID
+}
+
+type ContentPage struct {
+	Slug      string
+	Title     string
+	Body      string
+	Published bool
+	UpdatedAt pgtype.Timestamptz
+	UpdatedBy pgtype.UUID
+}
+
 type NewsletterSubscriber struct {
 	Email     string
 	CreatedAt pgtype.Timestamptz

@@ -35,7 +35,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 - ✅ A4 settings: `internal/settings`, `store_settings` row (migration 00007) replacing env values at runtime, add-on editing, public `/checkout-options`; cart/order/sweeper read settings per request. Test `TestAdminSettings`.
 - ✅ Contact WhatsApp number as a setting (migration 00008, default `+918084047949` confirmed by the owner 2026-10-28), public `/contact`, settings changes revalidate storefront tag `settings`. Cash on delivery removed from the API.
 - ✅ A5: `internal/marketing`, review moderation with rating recompute (migration 00009: moderated_at/by), newsletter list, CSV export (formula-safe, audited) and removal. Test `TestAdminMarketing`. Tests reset staff with `resetAdmins` (no TRUNCATE CASCADE: it would wipe reviews/order events that reference admins).
-- ⬜ A6 content.
+- ✅ A6: `internal/content` (migration 00010: content_documents, content_pages), public content endpoints, link allow-list. Tests `TestAdminContent`, `TestCheckLinks`. The admin panel phases A1–A6 are complete.
 
 ## Known issues / gaps
 
@@ -53,7 +53,7 @@ _Last updated: 2026-10-27 · Current milestone: M4_
 
 ## Next steps (in order)
 
-1. A6 content (homepage texts, navigation, footer, legal pages) editable by the content role.
+1. M7 hardening: rate limiting (sign-in, newsletter, cart, orders), gateway order call after commit, security headers, observability.
 2. S3/R2 `storage.Store` implementation when hosting is chosen (B9).
 2. Move the gateway order call after commit (with retry) before Razorpay goes live.
 3. Razorpay provider (when B1 credentials arrive): `payment.Razorpay` implementing `Provider`, webhook signature `X-Razorpay-Signature`.

@@ -240,6 +240,51 @@ paths:
                 properties:
                   whatsappNumber: { type: string, description: "E.164, e.g. +918084047949; absent when not set." }
 
+  /content/site:
+    get:
+      tags: [content]
+      operationId: getSiteContent
+      description: Announcement bar, navigation and footer as saved by editors; 404 until first saved (the storefront then uses its bundled copy).
+      responses:
+        "200":
+          description: Site content
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SiteContent" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /content/home:
+    get:
+      tags: [content]
+      operationId: getHomeContent
+      description: Homepage text as saved by editors; 404 until first saved.
+      responses:
+        "200":
+          description: Homepage content
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HomeContent" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /content/pages/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$", maxLength: 80 }
+    get:
+      tags: [content]
+      operationId: getContentPage
+      description: A published content page; drafts are not found.
+      responses:
+        "200":
+          description: Page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentPage" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+
   /checkout-options:
     get:
       tags: [checkout]
@@ -1228,6 +1273,138 @@ paths:
         "404": { $ref: "#/components/responses/Problem" }
 
 
+  /admin/content/site:
+    get:
+      tags: [admin]
+      operationId: adminGetSiteContent
+      description: Content role. 404 until first saved; the editor then starts from the storefront's bundled copy.
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: Site content
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSiteContent" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: adminSaveSiteContent
+      description: Content role. Links may only be site paths, https, mailto or tel. Revalidates the storefront.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SiteContent" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSiteContent" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/content/home:
+    get:
+      tags: [admin]
+      operationId: adminGetHomeContent
+      description: Content role. 404 until first saved; the editor then starts from the storefront's bundled copy.
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: Homepage content
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminHomeContent" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: adminSaveHomeContent
+      description: Content role. Links may only be site paths, https, mailto or tel. Revalidates the storefront.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HomeContent" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminHomeContent" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+  /admin/content/pages:
+    get:
+      tags: [admin]
+      operationId: adminListContentPages
+      description: Content role. Saved pages (drafts and published).
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: Pages
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [slug, title, published, updatedAt]
+                      properties:
+                        slug: { type: string }
+                        title: { type: string }
+                        published: { type: boolean }
+                        updatedAt: { type: string, format: date-time }
+                        updatedBy: { type: string }
+        "403": { $ref: "#/components/responses/Problem" }
+
+  /admin/content/pages/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[a-z0-9]+(-[a-z0-9]+)*$", maxLength: 80 }
+    get:
+      tags: [admin]
+      operationId: adminGetContentPage
+      security: [{ adminSession: [] }]
+      responses:
+        "200":
+          description: Page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminContentPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: adminSaveContentPage
+      description: Content role. Body is plain text; blank lines separate paragraphs, "## " starts a heading and "- " a bullet.
+      security: [{ adminSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContentPageInput" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminContentPage" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+
+
 components:
   securitySchemes:
     adminSession:
@@ -1601,6 +1778,149 @@ components:
         page: { type: integer }
         total: { type: integer }
         pending: { type: integer, description: Reviews awaiting moderation (all products). }
+
+    ContentLink:
+      type: object
+      required: [label, href]
+      additionalProperties: false
+      properties:
+        label: { type: string, minLength: 1, maxLength: 60 }
+        href: { type: string, minLength: 1, maxLength: 300, description: "Site path (/collections) or https://, mailto:, tel: link." }
+
+    SiteContent:
+      type: object
+      required: [announcement, primaryNav, footerColumns, legalLinks, copyright, paymentBadges]
+      additionalProperties: false
+      properties:
+        announcement:
+          type: array
+          maxItems: 6
+          items: { type: string, minLength: 1, maxLength: 80 }
+        primaryNav:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { $ref: "#/components/schemas/ContentLink" }
+        footerColumns:
+          type: array
+          maxItems: 4
+          items:
+            type: object
+            required: [title, links]
+            additionalProperties: false
+            properties:
+              title: { type: string, minLength: 1, maxLength: 40 }
+              links:
+                type: array
+                maxItems: 8
+                items: { $ref: "#/components/schemas/ContentLink" }
+        legalLinks:
+          type: array
+          maxItems: 6
+          items: { $ref: "#/components/schemas/ContentLink" }
+        copyright: { type: string, minLength: 1, maxLength: 200 }
+        paymentBadges:
+          type: array
+          maxItems: 8
+          items: { type: string, minLength: 1, maxLength: 60 }
+
+    SectionText:
+      type: object
+      required: [eyebrow, title, body]
+      additionalProperties: false
+      properties:
+        eyebrow: { type: string, maxLength: 60 }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        body: { type: string, maxLength: 600 }
+
+    HomeContent:
+      type: object
+      required: [hero, sections, testimonials]
+      additionalProperties: false
+      properties:
+        hero:
+          type: object
+          required: [badge, titleBefore, titleEmphasis, titleAfter, body, assurances]
+          additionalProperties: false
+          properties:
+            badge: { type: string, maxLength: 60 }
+            titleBefore: { type: string, maxLength: 120 }
+            titleEmphasis: { type: string, maxLength: 40 }
+            titleAfter: { type: string, maxLength: 120 }
+            body: { type: string, maxLength: 600 }
+            assurances:
+              type: array
+              maxItems: 4
+              items: { type: string, minLength: 1, maxLength: 60 }
+        sections:
+          type: object
+          required: [collections, bestSellers, rooms, pairings, craftsmanship, sizeGuide, testimonials, community]
+          additionalProperties: false
+          properties:
+            collections: { $ref: "#/components/schemas/SectionText" }
+            bestSellers: { $ref: "#/components/schemas/SectionText" }
+            rooms: { $ref: "#/components/schemas/SectionText" }
+            pairings: { $ref: "#/components/schemas/SectionText" }
+            craftsmanship: { $ref: "#/components/schemas/SectionText" }
+            sizeGuide: { $ref: "#/components/schemas/SectionText" }
+            testimonials: { $ref: "#/components/schemas/SectionText" }
+            community: { $ref: "#/components/schemas/SectionText" }
+        testimonials:
+          type: array
+          maxItems: 6
+          items:
+            type: object
+            required: [quote, name, meta]
+            additionalProperties: false
+            properties:
+              quote: { type: string, minLength: 1, maxLength: 600 }
+              name: { type: string, minLength: 1, maxLength: 80 }
+              meta: { type: string, maxLength: 120 }
+
+    AdminSiteContent:
+      type: object
+      required: [content, updatedAt]
+      properties:
+        content: { $ref: "#/components/schemas/SiteContent" }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { type: string }
+
+    AdminHomeContent:
+      type: object
+      required: [content, updatedAt]
+      properties:
+        content: { $ref: "#/components/schemas/HomeContent" }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { type: string }
+
+    ContentPageInput:
+      type: object
+      required: [title, body, published]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        body: { type: string, maxLength: 20000 }
+        published: { type: boolean }
+
+    ContentPage:
+      type: object
+      required: [slug, title, body, updatedAt]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        body: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    AdminContentPage:
+      type: object
+      required: [slug, title, body, published, updatedAt]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        body: { type: string }
+        published: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { type: string }
 
     AdminProduct:
       allOf:
